@@ -18,13 +18,14 @@ import qualified Data.Map as Map
 
 -- | Heap pointer
 newtype Ptr = Ptr Int
-  deriving (Eq, Ord, Data)
+  deriving (Show, Eq, Ord, Data)
 
 -- | Heap
 --
 -- NOTE: We will use the convention that if a particular term or pointer is
 -- to be interpreted in a specific heap, we will tuple the two.
 newtype Heap a = Heap (Map Ptr a)
+  deriving (Show)
 
 emptyHeap :: Heap a
 emptyHeap = Heap Map.empty

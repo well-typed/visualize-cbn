@@ -24,7 +24,7 @@ import CBN.Heap
 
 -- | Variable
 newtype Var = Var String
-  deriving (Data, Eq, Ord, IsString)
+  deriving (Show, Data, Eq, Ord, IsString)
 
 {-------------------------------------------------------------------------------
   Terms
@@ -32,15 +32,15 @@ newtype Var = Var String
 
 -- | Constructor name
 newtype Con = Con String
-    deriving (Data, Eq, Ord)
+    deriving (Show, Data, Eq, Ord)
 
 -- | Pattern
 data Pat = Pat Con [Var]
-    deriving (Data)
+    deriving (Show, Data)
 
 -- | A single match in a case statement
 data Match = Match Pat Term
-    deriving (Data)
+    deriving (Show, Data)
 
 -- | Term
 data Term =
@@ -50,7 +50,7 @@ data Term =
   | TPtr Ptr              -- ^ Heap pointer
   | TCon Con [Term]       -- ^ Constructor application
   | TPat Term [Match]     -- ^ Pattern match
-  deriving (Data)
+  deriving (Show, Data)
 
 -- n-ary application
 nTApp :: [Term] -> Term

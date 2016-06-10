@@ -39,17 +39,15 @@ term = QuasiQuoter {
 -------------------------------------------------------------------------------}
 
 parseVar :: Parser Var
-parseVar = lexeme $ mkVar <$> lower <*> many alphaNum
-  where
-    mkVar x xs = Var (x:xs)
+parseVar = Var <$> identifier <?> "variable"
 
 parseCon :: Parser Con
-parseCon = lexeme $ mkCon <$> upper <*> many alphaNum
+parseCon = (lexeme $ mkCon <$> upper <*> many alphaNum) <?> "constructor"
   where
     mkCon x xs = Con (x:xs)
 
 parsePtr :: Parser Ptr
-parsePtr = mkPtr <$> integer
+parsePtr = (mkPtr <$> integer) <?> "pointer"
   where
     mkPtr = Ptr . fromInteger
 
@@ -60,16 +58,16 @@ parseMatch :: Parser Match
 parseMatch = Match <$> parsePat <* reservedOp "->" <*> parseTerm
 
 parseTerm :: Parser Term
-parseTerm = nTApp <$> many1 go
+parseTerm = (nTApp <$> many1 go) <?> "term"
   where
     -- terms without top-level application
     go :: Parser Term
     go = msum [
-          TVar         <$> parseVar
-        , uncurry TLam <$> goLam
-        , TPtr         <$> parsePtr
-        , TCon         <$> parseCon <*> many parseTerm
+          uncurry TLam <$> goLam
         , uncurry TPat <$> goPat
+        , TCon <$> parseCon <*> many parseTerm
+        , TVar <$> parseVar
+        , TPtr <$> parsePtr
         , parens parseTerm
         ]
 
@@ -82,19 +80,20 @@ parseTerm = nTApp <$> many1 go
     goPat :: Parser (Term, [Match])
     goPat = (,) <$  reserved "case"
                 <*> parseTerm
-                <*  reservedOp "{"
-                <*> many parseMatch
-                <*  reservedOp "}"
+                <*  reserved "of"
+                <*> braces (parseMatch `sepBy` reservedOp ";")
 
 {-------------------------------------------------------------------------------
   Lexical analysis
 -------------------------------------------------------------------------------}
 
 lexer = P.makeTokenParser haskellDef {
-      P.reservedNames   = ["case"]
-    , P.reservedOpNames = ["\\", "->"]
+      P.reservedNames   = ["case", "of"]
+    , P.reservedOpNames = ["\\", "->", ";"]
     }
 
+braces     = P.braces     lexer
+identifier = P.identifier lexer
 integer    = P.integer    lexer
 lexeme     = P.lexeme     lexer
 parens     = P.parens     lexer
