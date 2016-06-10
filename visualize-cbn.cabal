@@ -36,6 +36,7 @@ executable visualize-cbn
   default-language:    Haskell2010
   default-extensions:  DeriveDataTypeable
                        LambdaCase
+                       ScopedTypeVariables
   other-extensions:    GeneralizedNewtypeDeriving
                        OverloadedStrings
   ghc-options:         -Wall

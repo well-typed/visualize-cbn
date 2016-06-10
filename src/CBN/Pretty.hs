@@ -4,13 +4,14 @@ module CBN.Pretty (
   ) where
 
 import Text.PrettyPrint.ANSI.Leijen
+import qualified Data.Map as Map
 
 import CBN.Language
 import CBN.Heap
 
 instance Pretty Var where pretty (Var x) = text x
 instance Pretty Con where pretty (Con c) = text c
-instance Pretty Ptr where pretty (Ptr n) = pretty n
+instance Pretty Ptr where pretty (Ptr n) = text "@" <> pretty n
 
 instance Pretty Pat where
   pretty (Pat c xs) = hsep (pretty c : map pretty xs)
@@ -47,6 +48,12 @@ instance Pretty Term where
       pPat = 2
       pLam = 2
       pTop = 0
+
+instance Pretty a => Pretty (Heap a) where
+  pretty (Heap heap) = vcat $ map go (Map.toList heap)
+    where
+      go :: (Ptr, a) -> Doc
+      go (ptr, a) = pretty ptr <> indent 8 (pretty a)
 
 {-------------------------------------------------------------------------------
   Auxiliary

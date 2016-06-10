@@ -47,7 +47,7 @@ parseCon = (lexeme $ mkCon <$> upper <*> many alphaNum) <?> "constructor"
     mkCon x xs = Con (x:xs)
 
 parsePtr :: Parser Ptr
-parsePtr = (mkPtr <$> integer) <?> "pointer"
+parsePtr = (mkPtr <$ reservedOp "@" <*> integer) <?> "pointer"
   where
     mkPtr = Ptr . fromInteger
 
@@ -89,7 +89,7 @@ parseTerm = (nTApp <$> many1 go) <?> "term"
 
 lexer = P.makeTokenParser haskellDef {
       P.reservedNames   = ["case", "of"]
-    , P.reservedOpNames = ["\\", "->", ";"]
+    , P.reservedOpNames = ["\\", "->", ";", "@"]
     }
 
 braces     = P.braces     lexer
