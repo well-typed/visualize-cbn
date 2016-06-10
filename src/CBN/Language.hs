@@ -3,15 +3,17 @@ module CBN.Language (
     -- * Variables
     Var(..)
     -- * Terms
-  , Con
+  , Con(..)
   , Pat(..)
   , Match(..)
   , Term(..)
+  , nTApp
     -- * Values
   , Value(..)
   , valueToTerm
   ) where
 
+import Data.Data (Data)
 import Data.String (IsString)
 
 import CBN.Heap
@@ -22,20 +24,23 @@ import CBN.Heap
 
 -- | Variable
 newtype Var = Var String
-  deriving (Eq, Ord, IsString)
+  deriving (Data, Eq, Ord, IsString)
 
 {-------------------------------------------------------------------------------
   Terms
 -------------------------------------------------------------------------------}
 
 -- | Constructor name
-type Con = String
+newtype Con = Con String
+    deriving (Data, Eq, Ord)
 
 -- | Pattern
 data Pat = Pat Con [Var]
+    deriving (Data)
 
 -- | A single match in a case statement
 data Match = Match Pat Term
+    deriving (Data)
 
 -- | Term
 data Term =
@@ -45,6 +50,13 @@ data Term =
   | TPtr Ptr              -- ^ Heap pointer
   | TCon Con [Term]       -- ^ Constructor application
   | TPat Term [Match]     -- ^ Pattern match
+  deriving (Data)
+
+-- n-ary application
+nTApp :: [Term] -> Term
+nTApp []     = error "impossible"
+nTApp [t]    = t
+nTApp (t:ts) = t `TApp` nTApp ts
 
 {-------------------------------------------------------------------------------
   Values

@@ -8,6 +8,7 @@ module CBN.Heap (
   , mutate
   ) where
 
+import Data.Data (Data)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -17,7 +18,7 @@ import qualified Data.Map as Map
 
 -- | Heap pointer
 newtype Ptr = Ptr Int
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Data)
 
 -- | Heap
 --

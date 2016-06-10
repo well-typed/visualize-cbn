@@ -32,10 +32,10 @@ step hp (TPtr ptr) =
       WHNF val    -> WHNF val
 step hp (TApp e1 e2) =
     case step hp e1 of
-      Step hp' e1'      -> Step hp' $ TApp e1' e2
-      Stuck err         -> Stuck err
-      WHNF (VCon c _)   -> Stuck $ "Cannot apply " ++ c
-      WHNF (VLam x e1') -> uncurry Step $ allocSubst [(x,e2)] (hp, e1')
+      Step hp' e1'          -> Step hp' $ TApp e1' e2
+      Stuck err             -> Stuck err
+      WHNF (VCon (Con c) _) -> Stuck $ "Cannot apply " ++ show c
+      WHNF (VLam x e1')     -> uncurry Step $ allocSubst [(x,e2)] (hp, e1')
 step hp (TPat e ms) =
     case step hp e of
       Step hp' e'      -> Step hp' $ TPat e' ms

@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 module Main where
 
 import Data.List (intercalate)
@@ -7,10 +7,14 @@ import qualified Data.Map as Map
 import CBN.Language
 import CBN.Heap
 import CBN.Eval
+import CBN.Parser
 
 {-------------------------------------------------------------------------------
   Show instances
 -------------------------------------------------------------------------------}
+
+instance Show Con where
+  show (Con c) = c
 
 instance Show Var where
   show (Var x) = x
@@ -18,7 +22,7 @@ instance Show Var where
 type Count = Int
 
 instance Show Pat where
-  show (Pat c xs) = intercalate " " (c:map show xs)
+  show (Pat c xs) = intercalate " " (show c:map show xs)
 
 instance Show Match where
   showsPrec p (Match pat e) = showsPrec 0 pat . (" -> " ++) . showsPrec p e
@@ -33,11 +37,11 @@ instance Show Term where
       TLam x e   -> bracketIf (p > precLam) $
                         ('\\':)
                       . showsPrec 0 x
-                      . (". " ++)
+                      . (" -> " ++)
                       . showsPrec precLam e
       TPtr ptr   -> showsPrec 0 ptr
       TCon c es  -> bracketIf (p > precCon) $
-                        (c ++)
+                        showsPrec 0 c
                       . foldr (.) id (map (\e -> (' ':) . showsPrec precCon e) es)
       TPat e ms  -> bracketIf (p > precPat) $
                         ("case " ++)
@@ -83,12 +87,10 @@ trace = go emptyHeap
   Examples
 -------------------------------------------------------------------------------}
 
-ex1 :: Term
-ex1 =      (TLam "x" (TApp (TVar "x") (TVar "x")))
-    `TApp` (TLam "x" (TApp (TVar "x") (TVar "x")))
+ex1, ex2 :: Term
+ex1 = [term| \x -> x |]
+ex2 = [term| (\x -> x x) (\x -> x x) |]
 
-ex2 :: Term
-ex2 = TLam "x" (TVar "x")
 
 {-
 ex3 :: (Heap, Term)
