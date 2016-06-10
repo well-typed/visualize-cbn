@@ -32,10 +32,12 @@ trace = go 0 emptyHeap
 ex1, ex2, ex3 :: Term
 ex1 = [term| \x -> x |]
 ex2 = [term| (\x -> x x) (\x -> x x) |]
-ex3 = [term| \xs -> case xs of {
-                 Nil        -> [0]
-               ; Cons x xs' -> [0] 
-               }
+ex3 = [term| let length = \xs ->
+               case xs of {
+                   Nil        -> 0
+                 ; Cons x xs' -> add 1 (length xs')
+                 }
+             in length (Cons Unit (Cons Unit (Cons Unit Nil)))
            |]
 
 {-------------------------------------------------------------------------------
@@ -43,4 +45,4 @@ ex3 = [term| \xs -> case xs of {
 -------------------------------------------------------------------------------}
 
 main :: IO ()
-main = putStrLn $ take 500 $ trace ex2
+main = putStrLn $ take 10000 $ trace ex3

@@ -30,8 +30,11 @@ newtype Heap a = Heap (Map Ptr a)
 emptyHeap :: Heap a
 emptyHeap = Heap Map.empty
 
-alloc :: Heap a -> a -> (Heap a, Ptr)
-alloc (Heap hp) e = (Heap (Map.insert ptr e hp), ptr)
+-- | Allocate a new value on the heap
+--
+-- The value is allowed to depend on the new heap pointer.
+alloc :: Heap a -> (Ptr -> a) -> (Heap a, Ptr)
+alloc (Heap hp) e = (Heap (Map.insert ptr (e ptr) hp), ptr)
   where
     ptr :: Ptr
     ptr = Ptr (Map.size hp)

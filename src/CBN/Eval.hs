@@ -31,12 +31,14 @@ step hp (TPtr ptr) =
       Step hp' e' -> Step (mutate (hp', ptr) e') (TPtr ptr)
       Stuck err   -> Stuck err
       WHNF val    -> WHNF val
+step hp (TLet x e1 e2) =
+    uncurry Step $ allocSubst RecursiveBinding [(x,e1)] (hp, e2)
 step hp (TApp e1 e2) =
     case step hp e1 of
       Step hp' e1'          -> Step hp' $ TApp e1' e2
       Stuck err             -> Stuck err
       WHNF (VCon (Con c) _) -> Stuck $ "Cannot apply " ++ show c
-      WHNF (VLam x e1')     -> uncurry Step $ allocSubst [(x,e2)] (hp, e1')
+      WHNF (VLam x e1')     -> uncurry Step $ allocSubst NonRecursiveBinding [(x,e2)] (hp, e1')
       WHNF (VPrim _)        -> Stuck $ "Cannot apply primitive function"
 step hp (TPat e ms) =
     case step hp e of
@@ -49,8 +51,8 @@ step hp (TPat e ms) =
           Nothing -> Stuck "Non-exhaustive pattern match"
           Just (xs, e') ->
             if length xs == length es
-              then uncurry Step $ allocSubst (zip xs es) (hp, e')
-              else Stuck "Invalid pattern match"
+              then uncurry Step $ allocSubst NonRecursiveBinding (zip xs es) (hp, e')
+              else Stuck $ "Invalid pattern match (cannot match " ++ show (xs, es) ++ ")"
 step hp (TPrim p es) =
     case stepPrimArgs hp es of
       PrimStep hp' es' -> Step hp' (TPrim p es')

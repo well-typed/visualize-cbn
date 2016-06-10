@@ -27,19 +27,23 @@ instance Pretty Term where
   pretty = go pTop
     where
       go :: Int -> Term -> Doc
-      go _ (TVar x)     = pretty x
-      go _ (TPtr n)     = pretty n
-      go _ (TPrim p ts) = brackets $ hsep (pretty p : map pretty ts)
-      go p (TApp e1 e2) = parensIf (p > pApp) $
-                            go pApp e1 <+> go pApp e2
-      go p (TLam x e)   = parensIf (p > pLam) $
-                            backslash <> pretty x <+> text "->" <+> go pLam e
-      go p (TCon c es)  = parensIf (p > pCon) $
-                            hsep (pretty c : map (go pCon) es)
-      go p (TPat e ms)  = parensIf (p > pPat) $
-                                (text "case" <+> go pTop e <+> lbrace)
-                            </> align (goMatches ms)
-                            </> rbrace
+      go _ (TVar x)        = pretty x
+      go _ (TPtr n)        = pretty n
+      go p (TPrim prim ts) = parensIf (p > pPrim) $
+                               hsep (pretty prim : map (go pPrim) ts)
+      go p (TApp e1 e2)    = parensIf (p > pApp) $
+                               go pApp e1 <+> go pApp e2
+      go p (TLam x e)      = parensIf (p > pLam) $
+                               backslash <> pretty x <+> text "->" <+> go pLam e
+      go p (TLet x e1 e2)  = parensIf (p > pLet) $
+                                   text "let" <+> pretty x <+> text "=" <+> pretty e1
+                               </> text "in" <+> pretty e2
+      go p (TCon c es)     = parensIf (p > pCon) $
+                               hsep (pretty c : map (go pCon) es)
+      go p (TPat e ms)     = parensIf (p > pPat) $
+                                   (text "case" <+> go pTop e <+> lbrace)
+                               </> align (goMatches ms)
+                               </> rbrace
 
       goMatches :: [Match] -> Doc
       goMatches []     = empty
@@ -48,11 +52,13 @@ instance Pretty Term where
                      </> text ";" <+> goMatches ms
 
       -- operator precedence
-      pApp = 4
-      pCon = 3
-      pPat = 2
-      pLam = 2
-      pTop = 0
+      pApp  = 6
+      pCon  = 5
+      pPrim = 4
+      pPat  = 3
+      pLet  = 2
+      pLam  = 1
+      pTop  = 0
 
 instance Pretty a => Pretty (Heap a) where
   pretty (Heap heap) = vcat $ map go (Map.toList heap)
@@ -65,5 +71,6 @@ instance Pretty a => Pretty (Heap a) where
 -------------------------------------------------------------------------------}
 
 parensIf :: Bool -> Doc -> Doc
-parensIf False = id
-parensIf True  = parens
+parensIf b = parens
+--parensIf False = id
+--parensIf True  = parens

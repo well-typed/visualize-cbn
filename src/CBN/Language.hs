@@ -54,6 +54,7 @@ data Term =
     TVar Var              -- ^ Variable
   | TApp Term Term        -- ^ Application
   | TLam Var Term         -- ^ Lambda abstraction
+  | TLet Var Term Term    -- ^ (Recursive) let binding
   | TPtr Ptr              -- ^ Heap pointer
   | TCon Con [Term]       -- ^ Constructor application
   | TPat Term [Match]     -- ^ Pattern match

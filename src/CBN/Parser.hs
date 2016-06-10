@@ -58,34 +58,41 @@ parseMatch :: Parser Match
 parseMatch = Match <$> parsePat <* reservedOp "->" <*> parseTerm
 
 parseTerm :: Parser Term
-parseTerm = (nTApp <$> many1 go) <?> "term"
+parseTerm = msum [
+      TCon  <$> parseCon  <*> many go
+    , TPrim <$> parsePrim <*> many go
+    , nTApp <$> many1 go
+    ] <?> "term"
   where
     -- terms without top-level application
     go :: Parser Term
     go = msum [
-          uncurry TLam  <$> goLam
-        , uncurry TPat  <$> goPat
-        , uncurry TPrim <$> brackets goPrim
-        , TCon <$> parseCon <*> many parseTerm
+          unaryTPrim <$> parsePrim
+        , unaryTCon  <$> parseCon
+        , TLam <$  reservedOp "\\"
+               <*> parseVar
+               <*  reservedOp "->"
+               <*> parseTerm
+        , TLet <$  reserved "let"
+               <*> parseVar
+               <*  reservedOp "="
+               <*> parseTerm
+               <*  reservedOp "in"
+               <*> parseTerm
+        , TPat <$  reserved "case"
+               <*> parseTerm
+               <*  reserved "of"
+               <*> braces (parseMatch `sepBy` reservedOp ";")
         , TVar <$> parseVar
         , TPtr <$> parsePtr
         , parens parseTerm
         ]
 
-    goPrim :: Parser (Prim, [Term])
-    goPrim = (,) <$> parsePrim <*> many parseTerm
+    unaryTPrim :: Prim -> Term
+    unaryTPrim p = TPrim p []
 
-    goLam :: Parser (Var, Term)
-    goLam = (,) <$  reservedOp "\\"
-                <*> parseVar
-                <*  reservedOp "->"
-                <*> parseTerm
-
-    goPat :: Parser (Term, [Match])
-    goPat = (,) <$  reserved "case"
-                <*> parseTerm
-                <*  reserved "of"
-                <*> braces (parseMatch `sepBy` reservedOp ";")
+    unaryTCon :: Con -> Term
+    unaryTCon c = TCon c []
 
 parsePrim :: Parser Prim
 parsePrim   = msum [
@@ -98,12 +105,11 @@ parsePrim   = msum [
 -------------------------------------------------------------------------------}
 
 lexer = P.makeTokenParser haskellDef {
-      P.reservedNames   = ["case", "of"]
-    , P.reservedOpNames = ["\\", "->", ";", "@"]
+      P.reservedNames   = ["case", "of", "let", "in"]
+    , P.reservedOpNames = ["\\", "->", ";", "@", "="]
     }
 
 braces     = P.braces     lexer
-brackets   = P.brackets   lexer
 identifier = P.identifier lexer
 integer    = P.integer    lexer
 lexeme     = P.lexeme     lexer
