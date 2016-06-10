@@ -6,6 +6,7 @@ module CBN.Language (
   , Con(..)
   , Pat(..)
   , Match(..)
+  , Prim(..)
   , Term(..)
   , nTApp
     -- * Values
@@ -13,7 +14,7 @@ module CBN.Language (
   , valueToTerm
   ) where
 
-import Data.Data (Data)
+import Data.Data (Data(..))
 import Data.String (IsString)
 
 import CBN.Heap
@@ -32,15 +33,21 @@ newtype Var = Var String
 
 -- | Constructor name
 newtype Con = Con String
-    deriving (Show, Data, Eq, Ord)
+  deriving (Show, Data, Eq, Ord)
 
 -- | Pattern
 data Pat = Pat Con [Var]
-    deriving (Show, Data)
+  deriving (Show, Data)
 
 -- | A single match in a case statement
 data Match = Match Pat Term
-    deriving (Show, Data)
+  deriving (Show, Data)
+
+-- | Primitives
+data Prim =
+    PInt Integer
+  | PAdd
+  deriving (Show, Data)
 
 -- | Term
 data Term =
@@ -50,6 +57,7 @@ data Term =
   | TPtr Ptr              -- ^ Heap pointer
   | TCon Con [Term]       -- ^ Constructor application
   | TPat Term [Match]     -- ^ Pattern match
+  | TPrim Prim [Term]     -- ^ Primitives (built-ins)
   deriving (Show, Data)
 
 -- n-ary application
@@ -66,7 +74,9 @@ nTApp (t:ts) = t `TApp` nTApp ts
 data Value =
     VLam Var Term
   | VCon Con [Term]
+  | VPrim Prim
 
 valueToTerm :: Value -> Term
 valueToTerm (VLam x e)  = TLam x e
 valueToTerm (VCon c es) = TCon c es
+valueToTerm (VPrim p)   = TPrim p []

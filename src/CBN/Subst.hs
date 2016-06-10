@@ -16,6 +16,7 @@ substPtr x ptr = go
     go (TPtr ptr')  = TPtr ptr'
     go (TCon c es)  = TCon c (map go es)
     go (TPat e ms)  = TPat (go e) (map goM ms)
+    go (TPrim p es) = TPrim p (map go es)
 
     goM :: Match -> Match
     goM (Match (Pat c xs) e) = Match (Pat c xs) $ if x `elem` xs then e else go e

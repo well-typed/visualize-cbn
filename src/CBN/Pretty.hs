@@ -19,12 +19,17 @@ instance Pretty Pat where
 instance Pretty Match where
   pretty (Match pat term) = pretty pat <+> text "->" <+> pretty term
 
+instance Pretty Prim where
+  pretty (PInt n) = pretty n
+  pretty PAdd     = text "add"
+
 instance Pretty Term where
   pretty = go pTop
     where
       go :: Int -> Term -> Doc
       go _ (TVar x)     = pretty x
       go _ (TPtr n)     = pretty n
+      go _ (TPrim p ts) = brackets $ hsep (pretty p : map pretty ts)
       go p (TApp e1 e2) = parensIf (p > pApp) $
                             go pApp e1 <+> go pApp e2
       go p (TLam x e)   = parensIf (p > pLam) $

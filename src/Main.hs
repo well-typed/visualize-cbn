@@ -33,8 +33,8 @@ ex1, ex2, ex3 :: Term
 ex1 = [term| \x -> x |]
 ex2 = [term| (\x -> x x) (\x -> x x) |]
 ex3 = [term| \xs -> case xs of {
-                 Nil        -> Zero
-               ; Cons x xs' -> Succ
+                 Nil        -> [0]
+               ; Cons x xs' -> [0] 
                }
            |]
 

@@ -63,13 +63,17 @@ parseTerm = (nTApp <$> many1 go) <?> "term"
     -- terms without top-level application
     go :: Parser Term
     go = msum [
-          uncurry TLam <$> goLam
-        , uncurry TPat <$> goPat
+          uncurry TLam  <$> goLam
+        , uncurry TPat  <$> goPat
+        , uncurry TPrim <$> brackets goPrim
         , TCon <$> parseCon <*> many parseTerm
         , TVar <$> parseVar
         , TPtr <$> parsePtr
         , parens parseTerm
         ]
+
+    goPrim :: Parser (Prim, [Term])
+    goPrim = (,) <$> parsePrim <*> many parseTerm
 
     goLam :: Parser (Var, Term)
     goLam = (,) <$  reservedOp "\\"
@@ -83,6 +87,12 @@ parseTerm = (nTApp <$> many1 go) <?> "term"
                 <*  reserved "of"
                 <*> braces (parseMatch `sepBy` reservedOp ";")
 
+parsePrim :: Parser Prim
+parsePrim   = msum [
+      PInt <$> natural
+    , PAdd <$ reserved "add"
+    ]
+
 {-------------------------------------------------------------------------------
   Lexical analysis
 -------------------------------------------------------------------------------}
@@ -93,12 +103,14 @@ lexer = P.makeTokenParser haskellDef {
     }
 
 braces     = P.braces     lexer
+brackets   = P.brackets   lexer
 identifier = P.identifier lexer
 integer    = P.integer    lexer
 lexeme     = P.lexeme     lexer
+natural    = P.natural    lexer
 parens     = P.parens     lexer
-reserved   = P.reserved   lexer
 reservedOp = P.reservedOp lexer
+reserved   = P.reserved   lexer
 whiteSpace = P.whiteSpace lexer
 
 {-------------------------------------------------------------------------------
