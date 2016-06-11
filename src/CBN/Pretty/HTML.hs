@@ -21,7 +21,7 @@ import CBN.Pretty.Precedence
 -------------------------------------------------------------------------------}
 
 instance ToMarkup a => ToMarkup (Heap a) where
-  toMarkup (Heap heap) =
+  toMarkup (Heap _next heap) =
     H.table $
       mapM_ go (Map.toList heap)
     where

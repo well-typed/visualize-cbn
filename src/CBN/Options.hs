@@ -9,6 +9,7 @@ import CBN.Trace
 data Options = Options {
       optionsInput     :: FilePath
     , optionsShowTrace :: Bool
+    , optionsGC        :: Bool
     , optionsSummarize :: SummarizeOptions
     , optionsJsOutput  :: Maybe FilePath
     , optionsJsName    :: String
@@ -27,6 +28,10 @@ parseOptions = Options
     <*> (switch $ mconcat [
              long "show-trace"
            , help "Write trace to console"
+           ])
+    <*> (switch $ mconcat [
+             long "gc"
+           , help "GC after each step"
            ])
     <*> parseSummarizeOptions
     <*> (optional . strOption $ mconcat [
@@ -57,4 +62,8 @@ parseSummarizeOptions = SummarizeOptions
     <*> (switch $ mconcat [
              long "hide-prelude"
            , help "Hide the prelude from the help"
+           ])
+    <*> (switch $ mconcat [
+             long "hide-gc"
+           , help "Hide GC steps"
            ])

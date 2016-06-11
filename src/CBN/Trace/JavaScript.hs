@@ -27,10 +27,11 @@ render name = \tr ->
       ++ set "heap" (renderHtml (toHtml hp))
       ++ set "term" (renderHtml (toHtml e))
       ++ case c of
-           TraceWHNF _     -> set "status" "whnf"      ++ "}\n"
-           TraceStuck err  -> set "status" (mkErr err) ++ "}\n"
-           TraceStopped    -> set "status" "stopped"   ++ "}\n"
-           TraceStep d tr' -> set "status" (mkDesc d)  ++ "}\n" ++ go (n + 1) tr'
+           TraceWHNF _     -> set "status" "whnf"               ++ "}\n"
+           TraceStuck err  -> set "status" (mkErr err)          ++ "}\n"
+           TraceStopped    -> set "status" "stopped"            ++ "}\n"
+           TraceStep d tr' -> set "status" (mkDesc d)           ++ "}\n" ++ go (n + 1) tr'
+           TraceGC  ps tr' -> set "status" "garbage collection" ++ "}\n" ++ go (n + 1) tr'
 
     mkErr :: String -> String
     mkErr = ("error: " ++)

@@ -62,7 +62,7 @@ instance Pretty Term where
                 . map (indent 2 . goMatch)
 
 instance Pretty a => Pretty (Heap a) where
-  pretty (Heap heap) = vcat $ map go (Map.toList heap)
+  pretty (Heap _next heap) = vcat $ map go (Map.toList heap)
     where
       go :: (Ptr, a) -> Doc
       go (ptr, a) = pretty ptr <> indent 8 (pretty a)

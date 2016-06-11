@@ -1,15 +1,22 @@
 module CBN.Free (
     Count
   , Free(..)
+  , Pointers(..)
   ) where
 
 import Data.Map (Map)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 import CBN.Language
+import CBN.Heap
 import qualified CBN.Util.Map as Map
 
 type Count = Int
+
+{-------------------------------------------------------------------------------
+  Free variables
+-------------------------------------------------------------------------------}
 
 -- | Compute free variables
 class Free a where
@@ -34,3 +41,27 @@ instance Free Term where
   free (TLet x e1 e2) = Map.delete x $ free [e1, e2]
   free (TPrim _ es)   = free es
   free (TIf c t f)    = free [c, t, f]
+
+{-------------------------------------------------------------------------------
+  Used pointers
+-------------------------------------------------------------------------------}
+
+instance Pointers Ptr where
+  pointers ptr = Set.singleton ptr
+
+instance Pointers a => Pointers [a] where
+  pointers = Set.unions . map pointers
+
+instance Pointers Match where
+  pointers (Match _pat e) = pointers e
+
+instance Pointers Term where
+  pointers (TVar _)       = Set.empty
+  pointers (TApp e1 e2)   = pointers [e1, e2]
+  pointers (TLam _ e)     = pointers e
+  pointers (TPtr ptr)     = pointers ptr
+  pointers (TCon _ es)    = pointers es
+  pointers (TCase e ms)   = Set.union (pointers e) (pointers ms)
+  pointers (TLet _ e1 e2) = pointers [e1, e2]
+  pointers (TPrim _ es)   = pointers es
+  pointers (TIf c t f)    = pointers [c, t, f]

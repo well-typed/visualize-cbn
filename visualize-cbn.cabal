@@ -37,11 +37,8 @@ executable visualize-cbn
                      , blaze-html
                      , blaze-markup
                      , containers
-                     , diagrams-cairo
-                     , mtl
                      , optparse-applicative
                      , parsec
-                     , SVGFonts
                      , template-haskell
   hs-source-dirs:      src
   default-language:    Haskell2010
@@ -53,5 +50,8 @@ executable visualize-cbn
                        StandaloneDeriving
   other-extensions:    GeneralizedNewtypeDeriving
                        OverloadedStrings
+                       TemplateHaskell
   ghc-options:         -Wall
                        -fno-warn-orphans
+                       -rtsopts
+                       "-with-rtsopts=-M128M"

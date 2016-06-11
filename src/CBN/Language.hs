@@ -79,6 +79,7 @@ data Value =
     VLam Var Term
   | VCon Con [Term]
   | VPrim Prim
+  deriving (Show)
 
 valueToTerm :: Value -> Term
 valueToTerm (VLam x e)  = TLam x e

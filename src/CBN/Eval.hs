@@ -41,6 +41,7 @@ data Step =
 
     -- | The evaluator got stuck
   | Stuck Error
+  deriving (Show)
 
 -- | Single execution step (small step semantics)
 step :: (Heap Term, Term) -> Step
