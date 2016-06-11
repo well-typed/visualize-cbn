@@ -34,11 +34,9 @@ instance Pretty Term where
       go _  (TPtr n)       = pretty n
       go fc (TApp e1 e2)   = parensIf (needsParens fc Ap) $
                                go (L Ap) e1 <+> go (R Ap) e2
-      go _  (TPrim p [])   = pretty p
-      go fc (TPrim p ts)   = parensIf (needsParens fc Ap) $
-                               hsep (pretty p : map (go (R Ap)) ts)
-      go _  (TCon c [])    = pretty c
-      go fc (TCon c es)    = parensIf (needsParens fc Ap) $
+      go fc (TPrim p es)   = parensIf (needsParens fc Ap && not (null es)) $
+                               hsep (pretty p : map (go (R Ap)) es)
+      go fc (TCon c es)    = parensIf (needsParens fc Ap && not (null es)) $
                                hsep (pretty c : map (go (R Ap)) es)
       go fc (TLam x e)     = parensIf (needsParens fc Lam) $
                                backslash <> pretty x <+> text "->" <+> go (R Lam) e

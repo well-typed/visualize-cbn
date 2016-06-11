@@ -13,6 +13,7 @@ import qualified Text.Blaze.Html5.Attributes as A
 import CBN.Heap
 import CBN.Language
 import CBN.Pretty.Doc
+import CBN.Pretty.Precedence
 
 {-------------------------------------------------------------------------------
   Translating to HTML
@@ -47,22 +48,31 @@ instance ToMarkup Con where
   toMarkup c = H.span ! A.style "color: darkred" $ toHtml (pretty c)
 
 instance ToMarkup Term where
-  toMarkup (TVar x)       = toHtml x
-  toMarkup (TPtr ptr)     = toHtml ptr
-  toMarkup (TApp e1 e2)   = punctuate " " $ map toHtml [e1, e2]
-  toMarkup (TCon c es)    = punctuate " " $ toHtml c : map toMarkup es
-  toMarkup (TPrim p es)   = punctuate " " $ toHtml p : map toMarkup es
-  toMarkup (TLam x e)     = do "\\" ; toHtml x ; " -> " ; toHtml e
-  toMarkup (TLet x e1 e2) = do kw "let " ; toHtml x ; " = " ; toHtml e1 ;
+  toMarkup = go Top
+    where
+      go :: FixityContext -> Term -> Html
+      go _  (TVar x)       = toHtml x
+      go _  (TPtr ptr)     = toHtml ptr
+      go fc (TApp e1 e2)   = parensIf (needsParens fc Ap) $
+                               do go (L Ap) e1 ; " " ; go (R Ap) e2
+      go fc (TPrim p es)   = parensIf (needsParens fc Ap && not (null es)) $
+                               punctuate " " $ toHtml p : map (go (R Ap)) es
+      go fc (TCon c es)    = parensIf (needsParens fc Ap && not (null es)) $
+                               punctuate " " $ toHtml c : map (go (R Ap)) es
+      go fc (TLam x e)     = parensIf (needsParens fc Lam) $
+                               do "\\" ; toHtml x ; " -> " ; go (R Lam) e
+      go fc (TLet x e1 e2) = parensIf (needsParens fc Let) $ do
+                               kw "let " ; toHtml x ; " = " ; go (L Let) e1 ;
                                kw "in" ; H.br
-                               toHtml e2
-  toMarkup (TCase e ms)   = do kw "case " ; toHtml e
-                               kw " of " ; " {"
-                               punctuate (H.br >> ";") (map toHtml ms)
-                               " }"
+                               go (R Let) e2
+      go fc (TCase e ms)   = parensIf (needsParens fc Case) $ do
+                                kw "case " ; go (L Case) e
+                                kw " of " ; " {"
+                                H.div $ punctuate (";" >> H.br) (map goMatch ms)
+                                " }"
 
-instance ToMarkup Match where
-  toMarkup (Match pat e) = do toMarkup pat ; " -> " ; toMarkup e
+      goMatch :: Match -> Html
+      goMatch (Match pat e) = do toMarkup pat ; " -> " ; go (R Case) e
 
 instance ToMarkup Pat where
   toMarkup (Pat c xs) = punctuate " " $ toHtml c : map toHtml xs
@@ -70,6 +80,10 @@ instance ToMarkup Pat where
 {-------------------------------------------------------------------------------
   Auxiliary
 -------------------------------------------------------------------------------}
+
+parensIf :: Bool -> Html -> Html
+parensIf False html = html
+parensIf True  html = do "(" ; html ; ")"
 
 -- | Keywords
 kw :: String -> Html
