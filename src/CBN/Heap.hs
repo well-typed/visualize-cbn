@@ -1,3 +1,6 @@
+-- | Heap
+--
+-- Intended for unqualified import
 module CBN.Heap (
     -- * Heap
     Ptr(..)
@@ -6,6 +9,7 @@ module CBN.Heap (
   , deref
   , alloc
   , mutate
+  , initHeap
   ) where
 
 import Data.Data (Data)
@@ -24,7 +28,10 @@ import qualified Data.Map as Map
 -- The @Int@ part is intentionally first so that pointers introduced earlier
 -- will be sorted first, independent of their name. This keeps the display of
 -- the heap in chronological order.
-data Ptr = Ptr Int (Maybe String)
+--
+-- The @Int@ part becauses we don't use it for elements added to the initial
+-- heap.
+data Ptr = Ptr (Maybe Int) (Maybe String)
   deriving (Show, Eq, Ord, Data)
 
 -- | Heap
@@ -44,10 +51,16 @@ alloc :: Maybe String -> Heap a -> (Ptr -> a) -> (Heap a, Ptr)
 alloc name (Heap hp) e = (Heap (Map.insert ptr (e ptr) hp), ptr)
   where
     ptr :: Ptr
-    ptr = Ptr (Map.size hp) name
+    ptr = Ptr (Just (Map.size hp)) name
 
 deref :: (Heap a, Ptr) -> a
 deref (Heap hp, ptr) = hp Map.! ptr
 
 mutate :: (Heap a, Ptr) -> a -> Heap a
 mutate (Heap hp, ptr) term = Heap (Map.insert ptr term hp)
+
+initHeap :: [(String, a)] -> Heap a
+initHeap = Heap . Map.fromList . map aux
+  where
+    aux :: (String, a) -> (Ptr, a)
+    aux (name, a) = (Ptr Nothing (Just name), a)

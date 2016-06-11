@@ -13,9 +13,11 @@ instance Pretty Var where pretty (Var x) = text x
 instance Pretty Con where pretty (Con c) = text c
 
 instance Pretty Ptr where
-  pretty (Ptr n (Just name)) = text name <> text "@" <> pretty n
-  pretty (Ptr n Nothing    ) =              text "@" <> pretty n
-
+  pretty (Ptr Nothing  Nothing)     = error "invalid pointer"
+  pretty (Ptr (Just n) Nothing)     = pretty n
+  pretty (Ptr Nothing  (Just name)) =             text "@" <> text name
+  pretty (Ptr (Just n) (Just name)) = pretty n <> text "@" <> text name
+  
 instance Pretty Pat where
   pretty (Pat c xs) = hsep (pretty c : map pretty xs)
 

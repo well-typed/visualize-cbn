@@ -17,6 +17,7 @@ import qualified Text.Parsec.Token   as P
 import qualified Language.Haskell.TH as TH
 
 import CBN.Language
+import CBN.Heap
 
 {-------------------------------------------------------------------------------
   Quasi-quotation
@@ -51,6 +52,15 @@ parsePat = Pat <$> parseCon <*> many parseVar
 parseMatch :: Parser Match
 parseMatch = Match <$> parsePat <* reservedOp "->" <*> parseTerm
 
+-- | Parse a pointer
+--
+-- The only pointers we expect in initial terms are ones that refer to the
+-- initial heap (the prelude)
+parsePtr :: Parser Ptr
+parsePtr = mkPtr <$ char '@' <*> identifier
+  where
+    mkPtr name = Ptr Nothing (Just name)
+
 parseTerm :: Parser Term
 parseTerm = msum [
       TCon  <$> parseCon  <*> many go
@@ -63,6 +73,7 @@ parseTerm = msum [
     go = msum [
           unaryTPrim <$> parsePrim
         , unaryTCon  <$> parseCon
+        , TPtr  <$> parsePtr
         , TLam  <$  reservedOp "\\"
                 <*> parseVar
                 <*  reservedOp "->"

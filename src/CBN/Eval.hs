@@ -8,8 +8,6 @@ import CBN.Language
 import CBN.Heap
 import CBN.Subst
 
-import Debug.Trace
-
 type Error = String
 
 data Step =
