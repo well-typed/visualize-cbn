@@ -44,9 +44,9 @@ parseOptions = Options
 
 parseSummarizeOptions :: Parser SummarizeOptions
 parseSummarizeOptions = SummarizeOptions
-    <$> (flag True False $ mconcat [
-             long "show-adjacent-beta"
-           , help "Don't collapse adjacent beta steps"
+    <$> (switch $ mconcat [
+             long "collapse-beta"
+           , help "Collapse adjacent beta steps"
            ])
     <*> (option auto $ mconcat [
              long "max-num-steps"
@@ -54,7 +54,7 @@ parseSummarizeOptions = SummarizeOptions
            , showDefault
            , value 1000
            ])
-    <*> (flag False True $ mconcat [
+    <*> (switch $ mconcat [
              long "hide-prelude"
            , help "Hide the prelude from the help"
            ])

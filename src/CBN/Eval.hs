@@ -27,6 +27,7 @@ data Description =
 
     -- | Pattern-match
   | StepMatch
+  deriving (Show)
 
 data Step =
     -- | Evaluation took a single stpe

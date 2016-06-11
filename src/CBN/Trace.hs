@@ -36,7 +36,7 @@ traceTerm (hp, e) = Trace (hp, e) $
 -------------------------------------------------------------------------------}
 
 data SummarizeOptions = SummarizeOptions {
-      summarizeAdjacentBeta :: Bool
+      summarizeCollapseBeta :: Bool
     , summarizeMaxNumSteps  :: Int
     , summarizeHidePrelude  :: Bool
     }
@@ -52,10 +52,14 @@ summarize SummarizeOptions{..} = go 0
         TraceStuck err -> TraceStuck err
         TraceStopped   -> TraceStopped
         TraceStep d t  -> case d of
-          _ | n > summarizeMaxNumSteps        -> TraceStopped
-          StepApply _ | summarizeAdjacentBeta -> TraceStep d $ goBeta (n + 1) t
-          StepBeta    | summarizeAdjacentBeta -> TraceStep d $ goBeta (n + 1) t
-          _otherwise                          -> TraceStep d $ go     (n + 1) t
+          _ | n > summarizeMaxNumSteps ->
+            TraceStopped
+          StepApply _ | summarizeCollapseBeta ->
+            TraceStep d $ goBeta (n + 1) t
+          StepBeta | summarizeCollapseBeta ->
+            TraceStep d $ goBeta (n + 1) t
+          _otherwise ->
+            TraceStep d $ go     (n + 1) t
 
     -- | We already saw one beta reduction; skip any subsequent ones
     goBeta :: Int -> Trace -> Trace
