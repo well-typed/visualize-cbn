@@ -19,6 +19,9 @@ data Description =
     -- | Beta-reduction
   | StepBeta
 
+    -- | Like beta-reduction, but apply a named function
+  | StepApply Ptr
+
     -- | Delta-reduction
   | StepDelta
 
@@ -48,12 +51,15 @@ step (hp, TPtr ptr) =
       WHNF val         -> WHNF val
 step (hp, TLet x e1 e2) =
     Step StepAlloc $ allocSubst RecBinding [(x,e1)] (hp, e2)
-step (hp, TApp e1 e2) =
+step (hp, TApp e1 e2) = do
+    let descr = case e1 of
+                  TPtr ptr   -> StepApply ptr
+                  _otherwise -> StepBeta
     case step (hp, e1) of
       Step d (hp', e1')     -> Step d (hp', TApp e1' e2)
       Stuck err             -> Stuck err
       WHNF (VCon (Con c) _) -> Stuck $ "Cannot apply " ++ show c
-      WHNF (VLam x e1')     -> Step StepBeta $ allocSubst NonRecBinding [(x,e2)] (hp, e1')
+      WHNF (VLam x e1')     -> Step descr $ allocSubst NonRecBinding [(x,e2)] (hp, e1')
       WHNF (VPrim _)        -> Stuck $ "Cannot apply primitive function"
 step (hp, TCase e ms) =
     case step (hp, e) of

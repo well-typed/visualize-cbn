@@ -64,10 +64,11 @@ instance Pretty a => Pretty (Heap a) where
       go (ptr, a) = pretty ptr <> indent 8 (pretty a)
 
 instance Pretty Description where
-  pretty StepAlloc = text "allocate"
-  pretty StepBeta  = text "beta reduction"
-  pretty StepDelta = text "delta reduction"
-  pretty StepMatch = text "match"
+  pretty StepAlloc     = text "allocate"
+  pretty StepBeta      = text "beta reduction"
+  pretty (StepApply f) = text "apply" <+> pretty f
+  pretty StepDelta     = text "delta reduction"
+  pretty StepMatch     = text "match"
 
 {-------------------------------------------------------------------------------
   Auxiliary

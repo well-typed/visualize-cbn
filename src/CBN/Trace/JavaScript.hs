@@ -3,7 +3,6 @@ module CBN.Trace.JavaScript (render) where
 import Text.Blaze.Html.Renderer.String
 
 import CBN.Eval
-import CBN.Pretty.Doc
 import CBN.Pretty.HTML
 import CBN.Trace
 
@@ -37,7 +36,7 @@ render name = \tr ->
     mkErr = ("error: " ++)
 
     mkDesc :: Description -> String
-    mkDesc d = "next step: " ++ show (pretty d)
+    mkDesc d = "next step: " ++ renderHtml (toHtml d)
 
     set :: String -> String -> String
     set suffix val = innerHTML suffix ++ " = " ++ show val ++ ";\n"

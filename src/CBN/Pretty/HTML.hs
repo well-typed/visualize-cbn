@@ -11,6 +11,7 @@ import qualified Text.PrettyPrint.ANSI.Leijen as Pretty
 import qualified Text.Blaze.Html5.Attributes as A
 
 import CBN.Heap
+import CBN.Eval
 import CBN.Language
 import CBN.Pretty.Doc
 import CBN.Pretty.Precedence
@@ -80,6 +81,13 @@ instance ToMarkup Term where
 
 instance ToMarkup Pat where
   toMarkup (Pat c xs) = punctuate " " $ toHtml c : map toHtml xs
+
+instance ToMarkup Description where
+  toMarkup StepAlloc     = "allocate"
+  toMarkup StepBeta      = "beta reduction"
+  toMarkup (StepApply f) = "apply " >> toHtml f
+  toMarkup StepDelta     = "delta reduction"
+  toMarkup StepMatch     = "match"
 
 {-------------------------------------------------------------------------------
   Auxiliary
