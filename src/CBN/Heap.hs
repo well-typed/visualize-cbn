@@ -104,15 +104,19 @@ mark roots heap =
 
 -- | Given a set of reachable pointers, remove all unreachable pointers
 --
+-- Entries from the prelude are never collected (are always considered to
+-- be reachable).
+--
 -- Returns the new heap and the set of removed pointers
 sweep :: Show a => Set Ptr -> Heap a -> (Heap a, Set Ptr)
 sweep reachable (Heap next hp) = (
-      Heap next $ Map.filterWithKey isReachable hp
-    , Map.keysSet hp Set.\\ reachable
+      Heap next $ Map.filterWithKey (\ptr _a -> isReachable ptr) hp
+    , Set.filter (not . isReachable) $ Map.keysSet hp
     )
   where
-    isReachable :: Ptr -> a -> Bool
-    isReachable ptr _ = ptr `Set.member` reachable
+    isReachable :: Ptr -> Bool
+    isReachable (Ptr Nothing _) = True
+    isReachable ptr             = ptr `Set.member` reachable
 
 -- | Mark-and-sweep garbage collection given a set of roots
 --
