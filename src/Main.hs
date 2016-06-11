@@ -57,4 +57,4 @@ exLengthEnumFromTo = [term|
 -------------------------------------------------------------------------------}
 
 main :: IO ()
-main = putStrLn $ take 10000 $ trace exLengthEnumFromTo
+main = putStrLn $ take 100000 $ trace exLengthEnumFromTo

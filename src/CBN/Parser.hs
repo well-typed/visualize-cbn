@@ -101,7 +101,7 @@ parsePrim   = msum [
 -------------------------------------------------------------------------------}
 
 lexer = P.makeTokenParser haskellDef {
-      P.reservedNames   = ["case", "of", "let", "in"]
+      P.reservedNames   = ["case", "of", "let", "in", "add", "lt", "eq", "le"]
     , P.reservedOpNames = ["\\", "->", ";", "@", "="]
     }
 

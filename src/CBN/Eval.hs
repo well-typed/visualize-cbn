@@ -8,6 +8,8 @@ import CBN.Language
 import CBN.Heap
 import CBN.Subst
 
+import Debug.Trace
+
 type Error = String
 
 data Step =
@@ -77,7 +79,7 @@ stepPrimArgs :: Heap Term -> [Term] -> StepPrimArgs
 stepPrimArgs hp = go []
   where
     go :: [Prim] -> [Term] -> StepPrimArgs
-    go acc []     = PrimValues acc
+    go acc []     = PrimValues (reverse acc)
     go acc (e:es) =
       case step hp e of
         WHNF (VPrim p) -> go (p:acc) es
