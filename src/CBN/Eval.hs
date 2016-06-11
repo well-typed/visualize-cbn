@@ -23,7 +23,7 @@ data Description =
   | StepApply Ptr
 
     -- | Delta-reduction
-  | StepDelta Prim
+  | StepDelta Prim [Prim]
 
     -- | Pattern-match
   | StepMatch
@@ -83,7 +83,7 @@ step (hp, TPrim p es) =
       PrimStep d hp' es' -> Step d (hp', TPrim p es')
       PrimWHNF vs        -> case delta p vs of
                               Left err -> Stuck err
-                              Right e' -> Step (StepDelta p) (hp, e')
+                              Right e' -> Step (StepDelta p vs) (hp, e')
       PrimStuck err      -> Stuck err
 step (hp, TIf c t f) =
     case step (hp, c) of
@@ -93,7 +93,7 @@ step (hp, TIf c t f) =
       WHNF (VPrim _)   -> Stuck "expected bool"
       WHNF (VCon (Con "True")  []) -> Step (StepIf True)  (hp, t)
       WHNF (VCon (Con "False") []) -> Step (StepIf False) (hp, f)
-      WHNF (VCon _             _)  -> Stuck "expected bool"      
+      WHNF (VCon _             _)  -> Stuck "expected bool"
 
 -- | The result of stepping the arguments to an n-ary primitive function
 data StepPrimArgs =

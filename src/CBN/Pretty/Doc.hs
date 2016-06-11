@@ -68,12 +68,12 @@ instance Pretty a => Pretty (Heap a) where
       go (ptr, a) = pretty ptr <> indent 8 (pretty a)
 
 instance Pretty Description where
-  pretty StepAlloc     = text "allocate"
-  pretty StepBeta      = text "beta reduction"
-  pretty (StepApply f) = text "apply" <+> pretty f
-  pretty (StepDelta p) = text "delta reduction" <+> pretty p
-  pretty StepMatch     = text "match"
-  pretty (StepIf b)    = text "if" <+> pretty b
+  pretty StepAlloc        = text "allocate"
+  pretty StepBeta         = text "beta reduction"
+  pretty (StepApply f)    = text "apply" <+> pretty f
+  pretty (StepDelta p ps) = text "delta: " <+> hsep (map pretty (p:ps))
+  pretty StepMatch        = text "match"
+  pretty (StepIf b)       = text "if" <+> pretty b
 
 {-------------------------------------------------------------------------------
   Auxiliary

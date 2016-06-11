@@ -88,12 +88,12 @@ instance ToMarkup Pat where
   toMarkup (Pat c xs) = punctuate " " $ toHtml c : map toHtml xs
 
 instance ToMarkup Description where
-  toMarkup StepAlloc     = "allocate"
-  toMarkup StepBeta      = "beta reduction"
-  toMarkup (StepApply f) = "apply " >> toHtml f
-  toMarkup (StepDelta p) = "delta reduction " >> toHtml p
-  toMarkup StepMatch     = "match"
-  toMarkup (StepIf b)    = "if " >> toHtml b
+  toMarkup StepAlloc        = "allocate"
+  toMarkup StepBeta         = "beta reduction"
+  toMarkup (StepApply f)    = "apply " >> toHtml f
+  toMarkup (StepDelta p ps) = "delta: " >> punctuate " " (map toHtml (p:ps))
+  toMarkup StepMatch        = "match"
+  toMarkup (StepIf b)       = "if " >> toHtml b
 
 {-------------------------------------------------------------------------------
   Auxiliary
