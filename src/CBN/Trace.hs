@@ -8,9 +8,15 @@ module CBN.Trace (
   , summarize
   ) where
 
+import qualified Data.Map as Map
+
 import CBN.Eval
 import CBN.Heap
 import CBN.Language
+
+{-------------------------------------------------------------------------------
+  Constructing the trace
+-------------------------------------------------------------------------------}
 
 data Trace = Trace (Heap Term, Term) TraceCont
 data TraceCont = TraceWHNF Value
@@ -25,15 +31,6 @@ traceTerm (hp, e) = Trace (hp, e) $
       Stuck err        -> TraceStuck err
       Step d (hp', e') -> TraceStep d $ traceTerm (hp', e')
 
-{-
-limitSteps :: Int -> Trace -> Trace
-limitSteps 0 (Trace (hp, e) _) = Trace (hp, e) TraceStopped
-limitSteps n (Trace (hp, e) c) = Trace (hp, e) $
-  case c of
-    TraceStep d t -> TraceStep d $ limitSteps (n-1) t
-    _otherwise    -> c
--}
-
 {-------------------------------------------------------------------------------
   Summarizing traces
 -------------------------------------------------------------------------------}
@@ -41,6 +38,7 @@ limitSteps n (Trace (hp, e) c) = Trace (hp, e) $
 data SummarizeOptions = SummarizeOptions {
       summarizeAdjacentBeta :: Bool
     , summarizeMaxNumSteps  :: Int
+    , summarizeHidePrelude  :: Bool
     }
   deriving (Show)
 
@@ -48,7 +46,7 @@ summarize :: SummarizeOptions -> Trace -> Trace
 summarize SummarizeOptions{..} = go 0
   where
     go :: Int -> Trace -> Trace
-    go n (Trace (hp, e) c) = Trace (hp, e) $
+    go n (Trace (hp, e) c) = Trace (goHeap hp, e) $
       case c of
         TraceWHNF v    -> TraceWHNF v
         TraceStuck err -> TraceStuck err
@@ -64,3 +62,15 @@ summarize SummarizeOptions{..} = go 0
     goBeta n t@(Trace _ c) = case c of
       TraceStep StepBeta t' -> goBeta (n + 1) t'
       _otherwise            -> go     (n + 1) t
+
+    -- | Cleanup the heap
+    goHeap :: Heap Term -> Heap Term
+    goHeap (Heap heap) = Heap $
+      if not summarizeHidePrelude
+        then heap
+        else Map.filterWithKey (\ptr -> not . isPrelude ptr) heap
+
+    -- | Does this entry in the heap come from the prelude?
+    isPrelude :: Ptr -> Term -> Bool
+    isPrelude (Ptr Nothing (Just _)) _ = True
+    isPrelude _ _ = False

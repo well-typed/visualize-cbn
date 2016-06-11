@@ -54,3 +54,7 @@ parseSummarizeOptions = SummarizeOptions
            , showDefault
            , value 1000
            ])
+    <*> (flag False True $ mconcat [
+             long "hide-prelude"
+           , help "Hide the prelude from the help"
+           ])
