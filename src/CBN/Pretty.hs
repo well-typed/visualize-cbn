@@ -21,7 +21,10 @@ instance Pretty Pat where
 
 instance Pretty Prim where
   pretty (PInt n) = pretty n
-  pretty PAdd     = text "add"
+  pretty PIAdd    = text "add"
+  pretty PIEq     = text "eq"
+  pretty PILt     = text "lt"
+  pretty PILe     = text "le"
 
 instance Pretty Term where
   pretty = go Top

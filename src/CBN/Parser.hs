@@ -89,8 +89,11 @@ parseTerm = msum [
 
 parsePrim :: Parser Prim
 parsePrim   = msum [
-      PInt <$> natural
-    , PAdd <$ reserved "add"
+      PInt  <$> natural
+    , PIAdd <$  reserved "add"
+    , PILt  <$  reserved "lt"
+    , PIEq  <$  reserved "eq"
+    , PILe  <$  reserved "le"
     ]
 
 {-------------------------------------------------------------------------------

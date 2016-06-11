@@ -44,9 +44,16 @@ ex5 = [term| case Nil of { Nil -> case Nil of { Nil -> 0 } } |]
 ex6 = [term| let x = 0 in let y = 1 in x |]
 ex7 = [term| let x = 0 in case x of { Nil -> 1 } |]
 
+exLengthEnumFromTo :: Term
+exLengthEnumFromTo = [term|
+    let if = \b -> \t -> \f -> case b of { True -> t ; False -> f } in
+    let enumFromTo = \n -> \m -> if (le n m) (Cons n (enumFromTo (add n 1) m)) Nil in
+    0
+  |]
+
 {-------------------------------------------------------------------------------
   Main
 -------------------------------------------------------------------------------}
 
 main :: IO ()
-main = putStrLn $ take 10000 $ trace ex3
+main = putStrLn $ take 10000 $ trace exLengthEnumFromTo

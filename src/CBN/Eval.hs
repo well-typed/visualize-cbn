@@ -58,7 +58,7 @@ step hp (TPrim p es) =
       PrimStep hp' es' -> Step hp' (TPrim p es')
       PrimValues vs    -> case delta p vs of
                             Left err -> Stuck err
-                            Right p' -> Step hp (TPrim p' [])
+                            Right e' -> Step hp e'
       PrimStuck err    -> Stuck err
 
 -- | The result of stepping the arguments to an n-ary primitive function
@@ -95,7 +95,20 @@ findMatch c = go
     go (Match (Pat c' xs) e:ms) | c == c'   = Just (xs, e)
                                 | otherwise = go ms
 
-delta :: Prim -> [Prim] -> Either Error Prim
-delta PAdd [PInt n1, PInt n2] = Right $ PInt (n1 + n2)
-delta PAdd     _ = Left "PAdd: invalid arguments"
-delta (PInt _) _ = Left "PInt: cannot apply"
+delta :: Prim -> [Prim] -> Either Error Term
+delta PIAdd [PInt n1, PInt n2] = Right $ liftInt  $ n1 +  n2
+delta PIEq  [PInt n1, PInt n2] = Right $ liftBool $ n1 == n2
+delta PILt  [PInt n1, PInt n2] = Right $ liftBool $ n1 <  n2
+delta PILe  [PInt n1, PInt n2] = Right $ liftBool $ n1 <= n2
+delta _op _args = Left $ "delta: cannot evaluate"
+
+{-------------------------------------------------------------------------------
+  Lifting from Haskell to our object language
+-------------------------------------------------------------------------------}
+
+liftInt :: Integer -> Term
+liftInt n = TPrim (PInt n) []
+
+liftBool :: Bool -> Term
+liftBool True  = TCon (Con "True")  []
+liftBool False = TCon (Con "False") []

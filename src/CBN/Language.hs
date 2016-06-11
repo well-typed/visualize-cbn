@@ -46,7 +46,10 @@ data Match = Match Pat Term
 -- | Primitives
 data Prim =
     PInt Integer
-  | PAdd
+  | PIAdd
+  | PIEq
+  | PILt
+  | PILe
   deriving (Show, Data)
 
 -- | Term
