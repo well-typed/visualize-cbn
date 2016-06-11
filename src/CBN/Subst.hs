@@ -37,7 +37,7 @@ subst x e' = go
     goM (Match (Pat c xs) e) = if x `elem` xs then Match (Pat c xs)     e
                                               else Match (Pat c xs) (go e)
 
-data RecursiveBinding = RecursiveBinding | NonRecursiveBinding
+data RecursiveBinding = RecBinding | NonRecBinding
 
 allocSubst :: RecursiveBinding -> [(Var, Term)] -> (Heap Term, Term) -> (Heap Term, Term)
 allocSubst recBind = go
@@ -65,7 +65,7 @@ allocSubst recBind = go
     -- If there are recursive occurrences we return False by definition.
     singleUse :: Var -> Term -> Term -> Bool
     singleUse x s e
-      | RecursiveBinding <- recBind, x `Map.member` free_s = False
+      | RecBinding <- recBind, x `Map.member` free_s = False
       | otherwise = Map.findWithDefault 0 x free_e <= 1
       where
         free_s, free_e :: Map Var Count
@@ -73,5 +73,5 @@ allocSubst recBind = go
         free_e = free e
 
     substRec :: Var -> Term -> Ptr -> Term
-    substRec x s ptr | RecursiveBinding <- recBind = subst x (TPtr ptr) s
-                     | otherwise                   = s
+    substRec x s ptr | RecBinding <- recBind = subst x (TPtr ptr) s
+                     | otherwise             = s

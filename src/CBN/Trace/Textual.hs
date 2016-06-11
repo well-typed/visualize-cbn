@@ -13,7 +13,7 @@ render = go 0
       ++ show (pretty e)  ++ "\n"
       ++ "\n"
       ++ case c of
-           TraceWHNF _    -> "(whnf)"
-           TraceStuck err -> "(stuck: " ++ err ++ ")"
-           TraceStopped   -> "(stopped)"
-           TraceStep tr'  -> go (n + 1) tr'
+           TraceWHNF _      -> "(whnf)"
+           TraceStuck err   -> "(stuck: " ++ err ++ ")"
+           TraceStopped     -> "(stopped)"
+           TraceStep _d tr' -> go (n + 1) tr'

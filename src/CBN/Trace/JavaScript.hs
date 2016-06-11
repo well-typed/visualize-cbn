@@ -2,6 +2,8 @@ module CBN.Trace.JavaScript (render) where
 
 import Text.Blaze.Html.Renderer.String
 
+import CBN.Eval
+import CBN.Pretty.Doc
 import CBN.Pretty.HTML
 import CBN.Trace
 
@@ -26,13 +28,16 @@ render name = \tr ->
       ++ set "heap" (renderHtml (toHtml hp))
       ++ set "term" (renderHtml (toHtml e))
       ++ case c of
-           TraceWHNF _    -> set "status" "whnf"      ++ "}\n"
-           TraceStuck err -> set "status" (mkErr err) ++ "}\n"
-           TraceStopped   -> set "status" "stopped"   ++ "}\n"
-           TraceStep tr'  -> set "status" "running"   ++ "}\n" ++ go (n + 1) tr'
+           TraceWHNF _     -> set "status" "whnf"      ++ "}\n"
+           TraceStuck err  -> set "status" (mkErr err) ++ "}\n"
+           TraceStopped    -> set "status" "stopped"   ++ "}\n"
+           TraceStep d tr' -> set "status" (mkDesc d)  ++ "}\n" ++ go (n + 1) tr'
 
     mkErr :: String -> String
     mkErr = ("error: " ++)
+
+    mkDesc :: Description -> String
+    mkDesc d = "next step: " ++ show (pretty d)
 
     set :: String -> String -> String
     set suffix val = innerHTML suffix ++ " = " ++ show val ++ ";\n"
