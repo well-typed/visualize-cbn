@@ -13,7 +13,7 @@ import qualified Text.Blaze.Html5.Attributes as A
 
 import CBN.Heap
 import CBN.Language
-import CBN.Pretty
+import CBN.Pretty.Doc
 import CBN.Trace
 
 toJS :: String -> Trace -> String

@@ -1,4 +1,4 @@
-module CBN.Pretty (
+module CBN.Pretty.Doc (
     -- * Re-exportsr
     pretty
   ) where
@@ -17,7 +17,7 @@ instance Pretty Ptr where
   pretty (Ptr (Just n) Nothing)     = pretty n
   pretty (Ptr Nothing  (Just name)) =             text "@" <> text name
   pretty (Ptr (Just n) (Just name)) = pretty n <> text "@" <> text name
-  
+
 instance Pretty Pat where
   pretty (Pat c xs) = hsep (pretty c : map pretty xs)
 

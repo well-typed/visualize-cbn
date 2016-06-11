@@ -23,7 +23,7 @@ executable visualize-cbn
                        CBN.Language
                        CBN.Options
                        CBN.Parser
-                       CBN.Pretty
+                       CBN.Pretty.Doc
                        CBN.Subst
                        CBN.Trace
                        CBN.Trace.HTML

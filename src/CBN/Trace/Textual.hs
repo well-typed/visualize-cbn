@@ -1,7 +1,7 @@
 module CBN.Trace.Textual (visualize) where
 
 import CBN.Trace
-import CBN.Pretty
+import CBN.Pretty.Doc
 
 visualize :: Trace -> String
 visualize = go 0
