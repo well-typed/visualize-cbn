@@ -76,7 +76,7 @@ instance ToMarkup Term where
                                 " }"
 
       goMatch :: Match -> Html
-      goMatch (Match pat e) = do toMarkup pat ; " -> " ; go (R Case) e
+      goMatch (Match pat e) = do nbsp ; nbsp ; toMarkup pat ; " -> " ; go (R Case) e
 
 instance ToMarkup Pat where
   toMarkup (Pat c xs) = punctuate " " $ toHtml c : map toHtml xs
@@ -98,3 +98,6 @@ instance ToMarkup Pretty.Doc where
 
 punctuate :: Html -> [Html] -> Html
 punctuate sep = sequence_ . intersperse sep
+
+nbsp :: Html
+nbsp = preEscapedToMarkup ("&nbsp;" :: String)
