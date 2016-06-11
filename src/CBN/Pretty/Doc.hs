@@ -67,7 +67,7 @@ instance Pretty Description where
   pretty StepAlloc     = text "allocate"
   pretty StepBeta      = text "beta reduction"
   pretty (StepApply f) = text "apply" <+> pretty f
-  pretty StepDelta     = text "delta reduction"
+  pretty (StepDelta p) = text "delta reduction " <+> pretty p 
   pretty StepMatch     = text "match"
 
 {-------------------------------------------------------------------------------

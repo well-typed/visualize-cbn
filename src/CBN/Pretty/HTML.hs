@@ -87,7 +87,7 @@ instance ToMarkup Description where
   toMarkup StepAlloc     = "allocate"
   toMarkup StepBeta      = "beta reduction"
   toMarkup (StepApply f) = "apply " >> toHtml f
-  toMarkup StepDelta     = "delta reduction"
+  toMarkup (StepDelta p) = "delta reduction " >> toHtml p
   toMarkup StepMatch     = "match"
 
 {-------------------------------------------------------------------------------

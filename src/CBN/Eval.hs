@@ -23,7 +23,7 @@ data Description =
   | StepApply Ptr
 
     -- | Delta-reduction
-  | StepDelta
+  | StepDelta Prim
 
     -- | Pattern-match
   | StepMatch
@@ -79,7 +79,7 @@ step (hp, TPrim p es) =
       PrimStep d hp' es' -> Step d (hp', TPrim p es')
       PrimWHNF vs        -> case delta p vs of
                               Left err -> Stuck err
-                              Right e' -> Step StepDelta (hp, e')
+                              Right e' -> Step (StepDelta p) (hp, e')
       PrimStuck err      -> Stuck err
 
 -- | The result of stepping the arguments to an n-ary primitive function
