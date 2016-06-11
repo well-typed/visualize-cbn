@@ -24,7 +24,7 @@ executable visualize-cbn
                        CBN.Parser
                        CBN.Pretty
                        CBN.Subst
-                       CBN.Util
+                       CBN.Util.Snoc
   build-depends:       base >=4.8 && <4.9
                      , ansi-wl-pprint
                      , containers

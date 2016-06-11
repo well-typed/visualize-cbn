@@ -20,7 +20,11 @@ import qualified Data.Map as Map
 --
 -- To improve readability, we keep an optional name for pointers that correspond
 -- to variables in the user's code.
-data Ptr = Ptr (Maybe String) Int
+--
+-- The @Int@ part is intentionally first so that pointers introduced earlier
+-- will be sorted first, independent of their name. This keeps the display of
+-- the heap in chronological order.
+data Ptr = Ptr Int (Maybe String)
   deriving (Show, Eq, Ord, Data)
 
 -- | Heap
@@ -40,7 +44,7 @@ alloc :: Maybe String -> Heap a -> (Ptr -> a) -> (Heap a, Ptr)
 alloc name (Heap hp) e = (Heap (Map.insert ptr (e ptr) hp), ptr)
   where
     ptr :: Ptr
-    ptr = Ptr name (Map.size hp)
+    ptr = Ptr (Map.size hp) name
 
 deref :: (Heap a, Ptr) -> a
 deref (Heap hp, ptr) = hp Map.! ptr

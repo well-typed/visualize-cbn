@@ -13,8 +13,8 @@ instance Pretty Var where pretty (Var x) = text x
 instance Pretty Con where pretty (Con c) = text c
 
 instance Pretty Ptr where
-  pretty (Ptr (Just name) n) = text name <> text "@" <> pretty n
-  pretty (Ptr Nothing     n) =              text "@" <> pretty n
+  pretty (Ptr n (Just name)) = text name <> text "@" <> pretty n
+  pretty (Ptr n Nothing    ) =              text "@" <> pretty n
 
 instance Pretty Pat where
   pretty (Pat c xs) = hsep (pretty c : map pretty xs)

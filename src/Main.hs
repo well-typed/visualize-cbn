@@ -48,7 +48,8 @@ exLengthEnumFromTo :: Term
 exLengthEnumFromTo = [term|
     let if = \b -> \t -> \f -> case b of { True -> t ; False -> f } in
     let enumFromTo = \n -> \m -> if (le n m) (Cons n (enumFromTo (add n 1) m)) Nil in
-    0
+    let length = \xs -> case xs of { Nil -> 0 ; Cons x xs' -> add 1 (length xs') } in
+    length (enumFromTo 1 3)
   |]
 
 {-------------------------------------------------------------------------------

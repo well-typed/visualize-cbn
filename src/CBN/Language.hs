@@ -18,6 +18,8 @@ import Data.Data (Data(..))
 import Data.String (IsString)
 
 import CBN.Heap
+import CBN.Util.Snoc (Snoc)
+import qualified CBN.Util.Snoc as Snoc
 
 {-------------------------------------------------------------------------------
   Variables
@@ -66,9 +68,12 @@ data Term =
 
 -- n-ary application
 nTApp :: [Term] -> Term
-nTApp []     = error "impossible"
-nTApp [t]    = t
-nTApp (t:ts) = t `TApp` nTApp ts
+nTApp = go . Snoc.fromList
+  where
+    go :: Snoc Term -> Term
+    go Snoc.Nil               = error "impossible"
+    go (Snoc.Cons Snoc.Nil t) = t
+    go (Snoc.Cons ts       t) = go ts `TApp` t
 
 {-------------------------------------------------------------------------------
   Values
