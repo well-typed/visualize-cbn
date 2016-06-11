@@ -24,7 +24,7 @@ import CBN.Heap
 -------------------------------------------------------------------------------}
 
 -- | Variable
-newtype Var = Var String
+newtype Var = Var { varName :: String }
   deriving (Show, Data, Eq, Ord, IsString)
 
 {-------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ newtype Var = Var String
 -------------------------------------------------------------------------------}
 
 -- | Constructor name
-newtype Con = Con String
+newtype Con = Con { conName :: String }
   deriving (Show, Data, Eq, Ord)
 
 -- | Pattern

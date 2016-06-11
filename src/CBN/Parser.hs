@@ -17,7 +17,6 @@ import qualified Text.Parsec.Token   as P
 import qualified Language.Haskell.TH as TH
 
 import CBN.Language
-import CBN.Heap
 
 {-------------------------------------------------------------------------------
   Quasi-quotation
@@ -45,11 +44,6 @@ parseCon :: Parser Con
 parseCon = (lexeme $ mkCon <$> upper <*> many alphaNum) <?> "constructor"
   where
     mkCon x xs = Con (x:xs)
-
-parsePtr :: Parser Ptr
-parsePtr = (mkPtr <$ reservedOp "@" <*> integer) <?> "pointer"
-  where
-    mkPtr = Ptr . fromInteger
 
 parsePat :: Parser Pat
 parsePat = Pat <$> parseCon <*> many parseVar
@@ -84,7 +78,6 @@ parseTerm = msum [
                <*  reserved "of"
                <*> braces (parseMatch `sepBy` reservedOp ";")
         , TVar <$> parseVar
-        , TPtr <$> parsePtr
         , parens parseTerm
         ]
 
@@ -111,7 +104,6 @@ lexer = P.makeTokenParser haskellDef {
 
 braces     = P.braces     lexer
 identifier = P.identifier lexer
-integer    = P.integer    lexer
 lexeme     = P.lexeme     lexer
 natural    = P.natural    lexer
 parens     = P.parens     lexer

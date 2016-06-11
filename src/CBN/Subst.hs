@@ -37,7 +37,7 @@ allocSubst recBind = go
     go ((x, s):ss) (hp, e) =
       case s of
         TPtr ptr   -> go ss (hp, substPtr x ptr e)
-        _otherwise -> let (hp', ptr) = alloc hp (substRec x s)
+        _otherwise -> let (hp', ptr) = alloc (Just (varName x)) hp (substRec x s)
                           e'         = substPtr x ptr e
                       in go ss (hp', e')
 
