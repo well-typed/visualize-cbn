@@ -4,8 +4,12 @@ module CBN.Subst (
   , allocSubst
   ) where
 
-import CBN.Language
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+import CBN.Free
 import CBN.Heap
+import CBN.Language
 
 -- | Substitution
 --
@@ -40,12 +44,33 @@ allocSubst recBind = go
   where
     go :: [(Var, Term)] -> (Heap Term, Term) -> (Heap Term, Term)
     go []          (hp, e) = (hp, e)
-    go ((x, s):ss) (hp, e) =
-      case s of
-        TPtr ptr   -> go ss (hp, subst x (TPtr ptr) e)
-        _otherwise -> let (hp', ptr) = alloc (Just (varName x)) hp (substRec x s)
-                          e'         = subst x (TPtr ptr) e
-                      in go ss (hp', e')
+    go ((x, s):ss) (hp, e)
+      | isSimple s      = go ss (hp, subst x s e)
+      | singleUse x s e = go ss (hp, subst x s e)
+      | otherwise =
+          let (hp', ptr) = alloc (Just (varName x)) hp (substRec x s)
+              e'         = subst x (TPtr ptr) e
+          in go ss (hp', e')
+
+    -- Is this a "simple" term (one that we can substitute freely, even if
+    -- multiple times)?
+    isSimple :: Term -> Bool
+    isSimple (TPtr _)     = True
+    isSimple (TCon _ [])  = True
+    isSimple (TPrim _ []) = True
+    isSimple _            = False
+
+    -- Is there (at most) only one use of this term?
+    -- (If so, we substitute rather than allocate on the heap)
+    -- If there are recursive occurrences we return False by definition.
+    singleUse :: Var -> Term -> Term -> Bool
+    singleUse x s e
+      | RecursiveBinding <- recBind, x `Map.member` free_s = False
+      | otherwise = Map.findWithDefault 0 x free_e <= 1
+      where
+        free_s, free_e :: Map Var Count
+        free_s = free s
+        free_e = free e
 
     substRec :: Var -> Term -> Ptr -> Term
     substRec x s ptr | RecursiveBinding <- recBind = subst x (TPtr ptr) s
