@@ -21,6 +21,14 @@ toJS name = \tr ->
        "function " ++ name ++ "(frame) {\n"
     ++ go 0 tr
     ++ "}\n"
+    ++ "var " ++ name ++ "_frame = 0;\n"
+    ++ "function " ++ name ++ "Next() {\n"
+    ++ name ++ "(++" ++ name ++ "_frame" ++ ");\n"
+    ++ "}\n"
+    ++ "function " ++ name ++ "Prev() {\n"
+    ++ name ++ "(--" ++ name ++ "_frame" ++ ");\n"
+    ++ "}\n"
+    ++ name ++ "(" ++ name ++ "_frame);\n"
   where
     go :: Int -> Trace -> String
     go n (Trace (hp, e) c) =
@@ -57,9 +65,19 @@ instance ToMarkup a => ToMarkup (Heap a) where
           H.td $ toHtml ptr
           H.td $ toHtml term
 
-instance ToMarkup Ptr  where toMarkup = toHtml . pretty
-instance ToMarkup Var  where toMarkup = toHtml . pretty
 instance ToMarkup Prim where toMarkup = toHtml . pretty
+
+instance ToMarkup Var where
+  toMarkup x = H.i $ toHtml (pretty x)
+
+instance ToMarkup Ptr where
+  toMarkup ptr = H.span ! A.style "color: darkblue" $ go ptr
+    where
+      go :: Ptr -> Html
+      go (Ptr Nothing  Nothing)     = error "invalid pointer"
+      go (Ptr (Just n) Nothing)     = toHtml n
+      go (Ptr Nothing  (Just name)) = toHtml name
+      go (Ptr (Just n) (Just name)) = do toHtml name ; "_" ; toHtml n
 
 instance ToMarkup Con where
   toMarkup c = H.span ! A.style "color: darkred" $ toHtml (pretty c)
@@ -70,12 +88,12 @@ instance ToMarkup Term where
   toMarkup (TApp e1 e2)   = punctuate " " $ map toHtml [e1, e2]
   toMarkup (TCon c es)    = punctuate " " $ toHtml c : map toMarkup es
   toMarkup (TPrim p es)   = punctuate " " $ toHtml p : map toMarkup es
-  toMarkup (TLam x e)     = do "\\" ; toHtml x ; " " ; toHtml e
+  toMarkup (TLam x e)     = do "\\" ; toHtml x ; " -> " ; toHtml e
   toMarkup (TLet x e1 e2) = do kw "let " ; toHtml x ; " = " ; toHtml e1 ;
                                kw "in" ; H.br
                                toHtml e2
-  toMarkup (TCase e ms)   = do kw "case" ; toHtml e
-                               kw "of" ; " {"
+  toMarkup (TCase e ms)   = do kw "case " ; toHtml e
+                               kw " of " ; " {"
                                punctuate (H.br >> ";") (map toHtml ms)
                                " }"
 
