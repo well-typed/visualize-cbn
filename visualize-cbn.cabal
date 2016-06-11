@@ -19,11 +19,12 @@ executable visualize-cbn
   main-is:             Main.hs
   other-modules:       CBN.Eval
                        CBN.Free
-                       CBN.Language
                        CBN.Heap
+                       CBN.Language
                        CBN.Parser
                        CBN.Pretty
                        CBN.Subst
+                       CBN.Trace
                        CBN.Util.Map
                        CBN.Util.Snoc
   build-depends:       base >=4.8 && <4.9

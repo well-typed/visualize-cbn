@@ -56,7 +56,7 @@ step hp (TCase e ms) =
 step hp (TPrim p es) =
     case stepPrimArgs hp es of
       PrimStep hp' es' -> Step hp' (TPrim p es')
-      PrimValues vs    -> case delta p vs of
+      PrimWHNF vs      -> case delta p vs of
                             Left err -> Stuck err
                             Right e' -> Step hp e'
       PrimStuck err    -> Stuck err
@@ -67,7 +67,7 @@ data StepPrimArgs =
     PrimStep (Heap Term) [Term]
 
     -- All terms were already in WHNF
-  | PrimValues [Prim]
+  | PrimWHNF [Prim]
 
     -- A term tried to take a step but got stuck
   | PrimStuck Error
@@ -77,7 +77,7 @@ stepPrimArgs :: Heap Term -> [Term] -> StepPrimArgs
 stepPrimArgs hp = go []
   where
     go :: [Prim] -> [Term] -> StepPrimArgs
-    go acc []     = PrimValues (reverse acc)
+    go acc []     = PrimWHNF (reverse acc)
     go acc (e:es) =
       case step hp e of
         WHNF (VPrim p) -> go (p:acc) es

@@ -1,29 +1,11 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Main where
 
-import CBN.Language
 import CBN.Heap
-import CBN.Eval
+import CBN.Language
 import CBN.Parser
-import CBN.Pretty
-
-{-------------------------------------------------------------------------------
-  Textual execution
--------------------------------------------------------------------------------}
-
-trace :: (Heap Term, Term) -> String
-trace = go 0
-  where
-    go :: Int -> (Heap Term, Term) -> String
-    go n (hp, e) =
-         "** " ++ show n  ++ "\n"
-      ++ show (pretty hp) ++ "\n"
-      ++ show (pretty e)  ++ "\n"
-      ++ "\n"
-      ++ case step hp e of
-           Step hp' e' -> go (n + 1) (hp', e')
-           WHNF _      -> "(whnf)"
-           Stuck err   -> "(stuck: " ++ err ++ ")"
+import CBN.Trace
+import CBN.Trace.Textual as Trace.Textual
 
 {-------------------------------------------------------------------------------
   Examples
@@ -50,4 +32,6 @@ prelude = initHeap [
 -------------------------------------------------------------------------------}
 
 main :: IO ()
-main = putStrLn $ take 100000 $ trace (prelude, exLengthEnumFromTo)
+main = putStrLn $ Trace.Textual.visualize
+                $ limitSteps 1000
+                $ trace (prelude, exLengthEnumFromTo)
