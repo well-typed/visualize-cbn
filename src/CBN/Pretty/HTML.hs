@@ -59,8 +59,12 @@ instance ToMarkup Term where
                                punctuate " " $ toHtml p : map (go (R Ap)) es
       go fc (TCon c es)    = parensIf (needsParens fc Ap && not (null es)) $
                                punctuate " " $ toHtml c : map (go (R Ap)) es
-      go fc (TLam x e)     = parensIf (needsParens fc Lam) $
-                               do "\\" ; toHtml x ; " -> " ; go (R Lam) e
+      go fc (TLam x e)     = parensIf (needsParens fc Lam) $ do
+                               let (xs, e') = collectArgs e
+                               "\\"
+                               punctuate " " $ map toHtml (x:xs)
+                               " -> "
+                               go (R Lam) e'
       go fc (TLet x e1 e2) = parensIf (needsParens fc Let) $ do
                                kw "let " ; toHtml x ; " = " ; go (L Let) e1 ;
                                kw "in" ; H.br

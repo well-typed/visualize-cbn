@@ -8,12 +8,15 @@ module CBN.Language (
   , Match(..)
   , Prim(..)
   , Term(..)
-  , nTApp
     -- * Values
   , Value(..)
   , valueToTerm
+    -- * Auxiliary
+  , nTApp
+  , collectArgs
   ) where
 
+import Control.Arrow (first)
 import Data.Data (Data(..))
 import Data.String (IsString)
 
@@ -66,15 +69,6 @@ data Term =
   | TPrim Prim [Term]     -- ^ Primitives (built-ins)
   deriving (Show, Data)
 
--- n-ary application
-nTApp :: [Term] -> Term
-nTApp = go . Snoc.fromList
-  where
-    go :: Snoc Term -> Term
-    go Snoc.Nil               = error "impossible"
-    go (Snoc.Cons Snoc.Nil t) = t
-    go (Snoc.Cons ts       t) = go ts `TApp` t
-
 {-------------------------------------------------------------------------------
   Values
 -------------------------------------------------------------------------------}
@@ -89,3 +83,22 @@ valueToTerm :: Value -> Term
 valueToTerm (VLam x e)  = TLam x e
 valueToTerm (VCon c es) = TCon c es
 valueToTerm (VPrim p)   = TPrim p []
+
+{-------------------------------------------------------------------------------
+  Auxiliary
+-------------------------------------------------------------------------------}
+
+-- | n-ary application
+nTApp :: [Term] -> Term
+nTApp = go . Snoc.fromList
+  where
+    go :: Snoc Term -> Term
+    go Snoc.Nil               = error "impossible"
+    go (Snoc.Cons Snoc.Nil t) = t
+    go (Snoc.Cons ts       t) = go ts `TApp` t
+
+-- | Collect all arguments for a lambda application
+-- (as if we had n-ary lambdas)
+collectArgs :: Term -> ([Var], Term)
+collectArgs (TLam x e) = first (x:) $ collectArgs e
+collectArgs e          = ([], e)
