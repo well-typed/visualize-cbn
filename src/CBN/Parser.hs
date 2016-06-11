@@ -63,21 +63,21 @@ parseTerm = msum [
     go = msum [
           unaryTPrim <$> parsePrim
         , unaryTCon  <$> parseCon
-        , TLam <$  reservedOp "\\"
-               <*> parseVar
-               <*  reservedOp "->"
-               <*> parseTerm
-        , TLet <$  reserved "let"
-               <*> parseVar
-               <*  reservedOp "="
-               <*> parseTerm
-               <*  reservedOp "in"
-               <*> parseTerm
-        , TPat <$  reserved "case"
-               <*> parseTerm
-               <*  reserved "of"
-               <*> braces (parseMatch `sepBy` reservedOp ";")
-        , TVar <$> parseVar
+        , TLam  <$  reservedOp "\\"
+                <*> parseVar
+                <*  reservedOp "->"
+                <*> parseTerm
+        , TLet  <$  reserved "let"
+                <*> parseVar
+                <*  reservedOp "="
+                <*> parseTerm
+                <*  reservedOp "in"
+                <*> parseTerm
+        , TCase <$  reserved "case"
+                <*> parseTerm
+                <*  reserved "of"
+                <*> braces (parseMatch `sepBy` reservedOp ";")
+        , TVar  <$> parseVar
         , parens parseTerm
         ]
 

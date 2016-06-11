@@ -42,9 +42,9 @@ step hp (TApp e1 e2) =
       WHNF (VCon (Con c) _) -> Stuck $ "Cannot apply " ++ show c
       WHNF (VLam x e1')     -> uncurry Step $ allocSubst NonRecursiveBinding [(x,e2)] (hp, e1')
       WHNF (VPrim _)        -> Stuck $ "Cannot apply primitive function"
-step hp (TPat e ms) =
+step hp (TCase e ms) =
     case step hp e of
-      Step hp' e'      -> Step hp' $ TPat e' ms
+      Step hp' e'      -> Step hp' $ TCase e' ms
       Stuck err        -> Stuck err
       WHNF (VLam _ _)  -> Stuck "cannot pattern match on lambda"
       WHNF (VPrim _)   -> Stuck "cannot pattern match on primitive values"

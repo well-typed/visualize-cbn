@@ -45,10 +45,10 @@ instance Pretty Term where
       go fc (TLet x e1 e2) = parensIf (needsParens fc Let) $
                                    text "let" <+> pretty x <+> text "=" <+> go (L Let) e1
                                </> text "in" <+> go (R Let) e2
-      go fc (TPat e ms)    = parensIf (needsParens fc Case) $
-                                  (text "case" <+> go (L Case) e <+> lbrace)
-                              </> align (goMatches ms)
-                              </> rbrace
+      go fc (TCase e ms)   = parensIf (needsParens fc Case) $
+                                   (text "case" <+> go (L Case) e <+> lbrace)
+                               </> align (goMatches ms)
+                               </> rbrace
 
       goMatch :: Match -> Doc
       goMatch (Match pat term) = pretty pat <+> text "->" <+> go (R Case) term

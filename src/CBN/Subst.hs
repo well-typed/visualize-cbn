@@ -1,5 +1,5 @@
 module CBN.Subst (
-    substPtr
+    subst
   , RecursiveBinding(..)
   , allocSubst
   ) where
@@ -7,11 +7,17 @@ module CBN.Subst (
 import CBN.Language
 import CBN.Heap
 
-substPtr :: Var -> Ptr -> Term -> Term
-substPtr x ptr = go
+-- | Substitution
+--
+-- NOTE: Although we deal with shadowing here @(\x -> .. (\x -> .. ))@, we
+-- do NOT implement capture avoiding substitution. Since we never reduce
+-- under binders, we can never have free variables, and hence this is not
+-- something we need to worry about.
+subst :: Var -> Term -> Term -> Term
+subst x e' = go
   where
     go :: Term -> Term
-    go (TVar x')       = if x == x' then TPtr ptr
+    go (TVar x')       = if x == x' then e'
                                     else TVar x'
     go (TLam x' e)     = if x == x' then TLam x'     e
                                     else TLam x' (go e)
@@ -20,7 +26,7 @@ substPtr x ptr = go
     go (TApp e1 e2)    = TApp (go e1) (go e2)
     go (TPtr ptr')     = TPtr ptr'
     go (TCon c es)     = TCon c (map go es)
-    go (TPat e ms)     = TPat (go e) (map goM ms)
+    go (TCase e ms)    = TCase (go e) (map goM ms)
     go (TPrim p es)    = TPrim p (map go es)
 
     goM :: Match -> Match
@@ -36,11 +42,11 @@ allocSubst recBind = go
     go []          (hp, e) = (hp, e)
     go ((x, s):ss) (hp, e) =
       case s of
-        TPtr ptr   -> go ss (hp, substPtr x ptr e)
+        TPtr ptr   -> go ss (hp, subst x (TPtr ptr) e)
         _otherwise -> let (hp', ptr) = alloc (Just (varName x)) hp (substRec x s)
-                          e'         = substPtr x ptr e
+                          e'         = subst x (TPtr ptr) e
                       in go ss (hp', e')
 
     substRec :: Var -> Term -> Ptr -> Term
-    substRec x s ptr | RecursiveBinding <- recBind = substPtr x ptr s
+    substRec x s ptr | RecursiveBinding <- recBind = subst x (TPtr ptr) s
                      | otherwise                   = s

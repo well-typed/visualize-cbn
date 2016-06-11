@@ -62,7 +62,7 @@ data Term =
   | TLet Var Term Term    -- ^ (Recursive) let binding
   | TPtr Ptr              -- ^ Heap pointer
   | TCon Con [Term]       -- ^ Constructor application
-  | TPat Term [Match]     -- ^ Pattern match
+  | TCase Term [Match]    -- ^ Pattern match
   | TPrim Prim [Term]     -- ^ Primitives (built-ins)
   deriving (Show, Data)
 
