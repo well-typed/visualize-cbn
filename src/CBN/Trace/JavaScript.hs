@@ -1,8 +1,11 @@
 module CBN.Trace.JavaScript (render) where
 
+import Data.Set (Set)
 import Text.Blaze.Html.Renderer.String
+import qualified Data.Set as Set
 
 import CBN.Eval
+import CBN.Heap
 import CBN.Pretty.HTML
 import CBN.Trace
 
@@ -23,15 +26,20 @@ render name = \tr ->
   where
     go :: Int -> Trace -> String
     go n (Trace (hp, e) c) =
-         "if(frame == " ++ show n ++ ") {\n"
-      ++ set "heap" (renderHtml (toHtml hp))
-      ++ set "term" (renderHtml (toHtml e))
-      ++ case c of
-           TraceWHNF _     -> set "status" "whnf"               ++ "}\n"
-           TraceStuck err  -> set "status" (mkErr err)          ++ "}\n"
-           TraceStopped    -> set "status" "stopped"            ++ "}\n"
-           TraceStep d tr' -> set "status" (mkDesc d)           ++ "}\n" ++ go (n + 1) tr'
-           TraceGC  ps tr' -> set "status" "garbage collection" ++ "}\n" ++ go (n + 1) tr'
+        case c of
+          TraceWHNF _     -> mkFrame Set.empty "whnf"
+          TraceStuck err  -> mkFrame Set.empty (mkErr err)
+          TraceStopped    -> mkFrame Set.empty "stopped"
+          TraceStep d tr' -> mkFrame Set.empty (mkDesc d) ++ go (n + 1) tr'
+          TraceGC  ps tr' -> mkFrame ps        "gc"       ++ go (n + 1) tr'
+      where
+        mkFrame :: Set Ptr -> String -> String
+        mkFrame garbage status =
+             "if(frame == " ++ show n ++ ") {\n"
+          ++ set "heap" (renderHtml (heapToHtml garbage hp))
+          ++ set "term" (renderHtml (toHtml e))
+          ++ set "status" status
+          ++ "}\n"
 
     mkErr :: String -> String
     mkErr = ("error: " ++)

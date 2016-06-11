@@ -1,14 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
-module CBN.Pretty.HTML (toHtml) where
+module CBN.Pretty.HTML (toHtml, heapToHtml) where
 
 import Data.List (intersperse)
+import Data.Set (Set)
 import Text.Blaze (ToMarkup(..))
 import Text.Blaze.Html5 (Html, toHtml, (!))
 import qualified Data.Map                     as Map
+import qualified Data.Set                     as Set
 import qualified Text.Blaze.Html5             as H
 import qualified Text.PrettyPrint.ANSI.Leijen as Pretty
-import qualified Text.Blaze.Html5.Attributes as A
+import qualified Text.Blaze.Html5.Attributes  as A
 
 import CBN.Heap
 import CBN.Eval
@@ -20,17 +22,20 @@ import CBN.Pretty.Precedence
   Translating to HTML
 -------------------------------------------------------------------------------}
 
-instance ToMarkup a => ToMarkup (Heap a) where
-  toMarkup (Heap _next heap) =
+-- | Render a heap to HTML, given a set of pointers about to be GC'ed
+heapToHtml :: forall a. ToMarkup a => Set Ptr -> Heap a -> Html
+heapToHtml garbage (Heap _next heap) =
     H.table $
       mapM_ go (Map.toList heap)
-    where
-      go :: (Ptr, a) -> Html
-      go (ptr, term) =
-        H.tr $ do
-          H.td $ toHtml ptr
-          H.td $ "="
-          H.td $ toHtml term
+  where
+    go :: (Ptr, a) -> Html
+    go (ptr, term) = do
+      let style | ptr `Set.member` garbage = "background-color: red;"
+                | otherwise                = ""
+      H.tr $ do
+        H.td ! A.style style $ toHtml ptr
+        H.td $ "="
+        H.td $ toHtml term
 
 instance ToMarkup Prim where toMarkup = toHtml . pretty
 
