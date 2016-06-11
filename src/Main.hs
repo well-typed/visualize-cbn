@@ -17,11 +17,9 @@ import CBN.Trace.Textual    as Trace.Textual
 
 prelude :: Heap Term
 prelude = initHeap [
-      ("if", [term|
-         \b -> \t -> \f -> case b of { True -> t ; False -> f }
-      |])
-    , ("enumFromTo", [term|
-         \n -> \m -> @if (le n m) (Cons n (@enumFromTo (add n 1) m)) Nil
+      ("enumFromTo", [term|
+         \n -> \m -> if le n m then Cons n (@enumFromTo (add n 1) m)
+                               else Nil
       |])
     , ("length", [term|
          \xs -> case xs of { Nil -> 0 ; Cons x xs' -> add 1 (@length xs') }

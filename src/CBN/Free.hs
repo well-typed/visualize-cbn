@@ -33,3 +33,4 @@ instance Free Term where
   free (TCase e ms)   = Map.unionWith (+) (free e) (free ms)
   free (TLet x e1 e2) = Map.delete x $ free [e1, e2]
   free (TPrim _ es)   = free es
+  free (TIf c t f)    = free [c, t, f]

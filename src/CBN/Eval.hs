@@ -27,6 +27,9 @@ data Description =
 
     -- | Pattern-match
   | StepMatch
+
+    -- | Evaluated conditional
+  | StepIf Bool
   deriving (Show)
 
 data Step =
@@ -82,6 +85,15 @@ step (hp, TPrim p es) =
                               Left err -> Stuck err
                               Right e' -> Step (StepDelta p) (hp, e')
       PrimStuck err      -> Stuck err
+step (hp, TIf c t f) =
+    case step (hp, c) of
+      Step d (hp', c') -> Step d (hp', TIf c' t f)
+      Stuck err        -> Stuck err
+      WHNF (VLam _ _)  -> Stuck "expected bool"
+      WHNF (VPrim _)   -> Stuck "expected bool"
+      WHNF (VCon (Con "True")  []) -> Step (StepIf True)  (hp, t)
+      WHNF (VCon (Con "False") []) -> Step (StepIf False) (hp, f)
+      WHNF (VCon _             _)  -> Stuck "expected bool"      
 
 -- | The result of stepping the arguments to an n-ary primitive function
 data StepPrimArgs =

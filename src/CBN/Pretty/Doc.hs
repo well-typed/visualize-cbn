@@ -48,6 +48,10 @@ instance Pretty Term where
                                    (text "case" <+> go (L Case) e <+> lbrace)
                                </> align (goMatches ms)
                                </> rbrace
+      go fc (TIf c t f)    = parensIf (needsParens fc If) $
+                               text "if" <+> go (L If) c
+                                 <+> text "then" <+> go (R If) t
+                                 <+> text "else" <+> go (R If) f
 
       goMatch :: Match -> Doc
       goMatch (Match pat term) = pretty pat <+> text "->" <+> go (R Case) term
@@ -67,8 +71,9 @@ instance Pretty Description where
   pretty StepAlloc     = text "allocate"
   pretty StepBeta      = text "beta reduction"
   pretty (StepApply f) = text "apply" <+> pretty f
-  pretty (StepDelta p) = text "delta reduction " <+> pretty p 
+  pretty (StepDelta p) = text "delta reduction" <+> pretty p
   pretty StepMatch     = text "match"
+  pretty (StepIf b)    = text "if" <+> pretty b
 
 {-------------------------------------------------------------------------------
   Auxiliary

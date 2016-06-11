@@ -76,6 +76,10 @@ instance ToMarkup Term where
                                 kw " of " ; " {"
                                 H.div $ punctuate (";" >> H.br) (map goMatch ms)
                                 " }"
+      go fc (TIf c t f)    = parensIf (needsParens fc If) $ do
+                               kw "if " ; go (L If) c
+                               kw " then " ; go (R Case) t
+                               kw " else " ; go (R Case) f
 
       goMatch :: Match -> Html
       goMatch (Match pat e) = do nbsp ; nbsp ; toMarkup pat ; " -> " ; go (R Case) e
@@ -89,6 +93,7 @@ instance ToMarkup Description where
   toMarkup (StepApply f) = "apply " >> toHtml f
   toMarkup (StepDelta p) = "delta reduction " >> toHtml p
   toMarkup StepMatch     = "match"
+  toMarkup (StepIf b)    = "if " >> toHtml b
 
 {-------------------------------------------------------------------------------
   Auxiliary

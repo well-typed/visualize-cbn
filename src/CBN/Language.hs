@@ -67,6 +67,7 @@ data Term =
   | TCon Con [Term]       -- ^ Constructor application
   | TCase Term [Match]    -- ^ Pattern match
   | TPrim Prim [Term]     -- ^ Primitives (built-ins)
+  | TIf Term Term Term    -- ^ Conditional
   deriving (Show, Data)
 
 {-------------------------------------------------------------------------------

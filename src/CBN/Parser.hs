@@ -84,6 +84,12 @@ parseTerm = msum [
                 <*> parseTerm
                 <*  reservedOp "in"
                 <*> parseTerm
+        , TIf   <$  reserved "if"
+                <*> parseTerm
+                <*  reserved "then"
+                <*> parseTerm
+                <*  reserved "else"
+                <*> parseTerm         
         , TCase <$  reserved "case"
                 <*> parseTerm
                 <*  reserved "of"
@@ -112,8 +118,26 @@ parsePrim   = msum [
 -------------------------------------------------------------------------------}
 
 lexer = P.makeTokenParser haskellDef {
-      P.reservedNames   = ["case", "of", "let", "in", "add", "lt", "eq", "le"]
-    , P.reservedOpNames = ["\\", "->", ";", "@", "="]
+      P.reservedNames = [
+          "case"
+        , "of"
+        , "let"
+        , "in"
+        , "add"
+        , "lt"
+        , "eq"
+        , "le"
+        , "if"
+        , "then"
+        , "else"
+        ]
+    , P.reservedOpNames = [
+          "\\"
+        , "->"
+        , ";"
+        , "@"
+        , "="
+        ]
     }
 
 braces     = P.braces     lexer

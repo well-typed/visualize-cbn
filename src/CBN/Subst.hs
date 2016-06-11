@@ -32,6 +32,7 @@ subst x e' = go
     go (TCon c es)     = TCon c (map go es)
     go (TCase e ms)    = TCase (go e) (map goM ms)
     go (TPrim p es)    = TPrim p (map go es)
+    go (TIf c t f)     = TIf (go c) (go t) (go f)
 
     goM :: Match -> Match
     goM (Match (Pat c xs) e) = if x `elem` xs then Match (Pat c xs)     e

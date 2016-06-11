@@ -8,7 +8,7 @@ module CBN.Pretty.Precedence (
   , needsParens
   ) where
 
-data Operator        = Ap | Lam | Let | Case              deriving Eq
+data Operator        = Ap | Lam | Let | Case | If         deriving Eq
 data Assoc           = AssocLeft | AssocRight | AssocNone deriving Eq
 data FixityContext   = Top | L Operator | R Operator
 type PartialOrdering = Maybe Ordering
@@ -18,6 +18,7 @@ assoc Ap   = AssocLeft
 assoc Lam  = AssocRight
 assoc Case = AssocRight
 assoc Let  = AssocRight
+assoc If   = AssocRight
 
 comparePrec :: Operator -> Operator -> PartialOrdering
 comparePrec op1 op2 | op1 == op2 = Just EQ
