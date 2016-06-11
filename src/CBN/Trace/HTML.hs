@@ -40,7 +40,7 @@ toJS name = \tr ->
     set suffix val = innerHTML suffix ++ " = " ++ show val ++ ";\n"
 
     innerHTML :: String -> String
-    innerHTML suffix = "document.getElementById(\"" ++ name ++ "_" ++ suffix ++ ").innerHTML"
+    innerHTML suffix = "document.getElementById(\"" ++ name ++ "_" ++ suffix ++ "\").innerHTML"
 
 {-------------------------------------------------------------------------------
   Translating to HTML

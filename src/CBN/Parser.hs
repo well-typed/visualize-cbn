@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module CBN.Parser (
     parseTerm
-  , parseTopLevel
   , term
+  , parseIO
   ) where
 
 import Control.Exception
@@ -27,7 +27,7 @@ term :: QuasiQuoter
 term = QuasiQuoter {
       quoteExp = \str -> do
         l <- location
-        c <- TH.runIO $ parseIO (setPosition l *> parseTopLevel parseTerm) str
+        c <- TH.runIO $ parseIO "splice" (setPosition l *> parseTerm) str
         dataToExpQ (const Nothing) c
     , quotePat  = undefined
     , quoteType = undefined
@@ -132,9 +132,9 @@ whiteSpace = P.whiteSpace lexer
 parseTopLevel :: Parser a -> Parser a
 parseTopLevel p = whiteSpace *> p <* eof
 
-parseIO :: Parser a -> String -> IO a
-parseIO p str =
-  case parse p "" str of
+parseIO :: String -> Parser a -> String -> IO a
+parseIO input p str =
+  case parse (parseTopLevel p) input str of
     Left err -> throwIO (userError (show err))
     Right a  -> return a
 

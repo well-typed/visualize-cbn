@@ -1,7 +1,7 @@
 module CBN.Trace (
     Trace(..)
   , TraceCont(..)
-  , trace
+  , traceTerm
   , limitSteps
   ) where
 
@@ -15,12 +15,12 @@ data TraceCont = TraceWHNF Value
                | TraceStopped
                | TraceStep Trace
 
-trace :: (Heap Term, Term) -> Trace
-trace (hp, e) = Trace (hp, e) $
+traceTerm :: (Heap Term, Term) -> Trace
+traceTerm (hp, e) = Trace (hp, e) $
     case step hp e of
       WHNF val    -> TraceWHNF   val
       Stuck err   -> TraceStuck  err
-      Step hp' e' -> TraceStep $ trace (hp', e')
+      Step hp' e' -> TraceStep $ traceTerm (hp', e')
 
 limitSteps :: Int -> Trace -> Trace
 limitSteps 0 (Trace (hp, e) _) = Trace (hp, e) TraceStopped

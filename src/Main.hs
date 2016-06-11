@@ -1,19 +1,19 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Main where
 
+import Control.Monad
+
 import CBN.Heap
 import CBN.Language
 import CBN.Parser
 import CBN.Trace
 import CBN.Trace.Textual as Trace.Textual
 import CBN.Trace.HTML    as Trace.HTML
+import CBN.Options
 
 {-------------------------------------------------------------------------------
-  Examples
+  Prelude
 -------------------------------------------------------------------------------}
-
-exLengthEnumFromTo :: Term
-exLengthEnumFromTo = [term| @length (@enumFromTo 1 3) |]
 
 prelude :: Heap Term
 prelude = initHeap [
@@ -33,6 +33,11 @@ prelude = initHeap [
 -------------------------------------------------------------------------------}
 
 main :: IO ()
-main = putStrLn $ Trace.HTML.toJS "lengthEnumFromTo"
-                $ limitSteps 1000
-                $ trace (prelude, exLengthEnumFromTo)
+main = do
+    Options{..} <- getOptions
+    input <- parseIO optionsInput parseTerm =<< readFile optionsInput
+    let trace = limitSteps optionsMaxNumSteps $ traceTerm (prelude, input)
+    when optionsShowTrace $
+      putStrLn $ Trace.Textual.visualize trace
+    forM_ optionsJsOutput $ \file ->
+      writeFile file $ Trace.HTML.toJS optionsJsName trace

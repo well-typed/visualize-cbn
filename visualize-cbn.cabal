@@ -21,12 +21,13 @@ executable visualize-cbn
                        CBN.Free
                        CBN.Heap
                        CBN.Language
+                       CBN.Options
                        CBN.Parser
                        CBN.Pretty
                        CBN.Subst
                        CBN.Trace
-                       CBN.Trace.Textual
                        CBN.Trace.HTML
+                       CBN.Trace.Textual
                        CBN.Util.Map
                        CBN.Util.Snoc
   build-depends:       base >=4.8 && <4.9
@@ -36,6 +37,7 @@ executable visualize-cbn
                      , containers
                      , diagrams-cairo
                      , mtl
+                     , optparse-applicative
                      , parsec
                      , SVGFonts
                      , template-haskell
@@ -44,6 +46,7 @@ executable visualize-cbn
   default-extensions:  DeriveDataTypeable
                        ExistentialQuantification
                        LambdaCase
+                       RecordWildCards
                        ScopedTypeVariables
                        StandaloneDeriving
   other-extensions:    GeneralizedNewtypeDeriving
