@@ -1,11 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
-module CBN.Trace.HTML (toJS) where
+module CBN.Pretty.HTML (toHtml) where
 
 import Data.List (intersperse)
 import Text.Blaze (ToMarkup(..))
 import Text.Blaze.Html5 (Html, toHtml, (!))
-import Text.Blaze.Html.Renderer.String
 import qualified Data.Map                     as Map
 import qualified Text.Blaze.Html5             as H
 import qualified Text.PrettyPrint.ANSI.Leijen as Pretty
@@ -14,41 +13,6 @@ import qualified Text.Blaze.Html5.Attributes as A
 import CBN.Heap
 import CBN.Language
 import CBN.Pretty.Doc
-import CBN.Trace
-
-toJS :: String -> Trace -> String
-toJS name = \tr ->
-       "function " ++ name ++ "(frame) {\n"
-    ++ go 0 tr
-    ++ "}\n"
-    ++ "var " ++ name ++ "_frame = 0;\n"
-    ++ "function " ++ name ++ "Next() {\n"
-    ++ name ++ "(++" ++ name ++ "_frame" ++ ");\n"
-    ++ "}\n"
-    ++ "function " ++ name ++ "Prev() {\n"
-    ++ name ++ "(--" ++ name ++ "_frame" ++ ");\n"
-    ++ "}\n"
-    ++ name ++ "(" ++ name ++ "_frame);\n"
-  where
-    go :: Int -> Trace -> String
-    go n (Trace (hp, e) c) =
-         "if(frame == " ++ show n ++ ") {\n"
-      ++ set "heap" (renderHtml (toHtml hp))
-      ++ set "term" (renderHtml (toHtml e))
-      ++ case c of
-           TraceWHNF _    -> set "status" "whnf"      ++ "}\n"
-           TraceStuck err -> set "status" (mkErr err) ++ "}\n"
-           TraceStopped   -> set "status" "stopped"   ++ "}\n"
-           TraceStep tr'  -> set "status" ""          ++ "}\n" ++ go (n + 1) tr'
-
-    mkErr :: String -> String
-    mkErr = ("error: " ++)
-
-    set :: String -> String -> String
-    set suffix val = innerHTML suffix ++ " = " ++ show val ++ ";\n"
-
-    innerHTML :: String -> String
-    innerHTML suffix = "document.getElementById(\"" ++ name ++ "_" ++ suffix ++ "\").innerHTML"
 
 {-------------------------------------------------------------------------------
   Translating to HTML

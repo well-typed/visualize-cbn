@@ -1,7 +1,4 @@
-module CBN.Pretty.Doc (
-    -- * Re-exportsr
-    pretty
-  ) where
+module CBN.Pretty.Doc (pretty) where
 
 import Text.PrettyPrint.ANSI.Leijen
 import qualified Data.Map as Map

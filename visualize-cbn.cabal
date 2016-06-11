@@ -24,10 +24,11 @@ executable visualize-cbn
                        CBN.Options
                        CBN.Parser
                        CBN.Pretty.Doc
+                       CBN.Pretty.HTML
                        CBN.Pretty.Precedence
                        CBN.Subst
                        CBN.Trace
-                       CBN.Trace.HTML
+                       CBN.Trace.JavaScript
                        CBN.Trace.Textual
                        CBN.Util.Map
                        CBN.Util.Snoc

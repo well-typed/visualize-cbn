@@ -5,11 +5,11 @@ import Control.Monad
 
 import CBN.Heap
 import CBN.Language
+import CBN.Options
 import CBN.Parser
 import CBN.Trace
-import CBN.Trace.Textual as Trace.Textual
-import CBN.Trace.HTML    as Trace.HTML
-import CBN.Options
+import CBN.Trace.JavaScript as Trace.JavaScript
+import CBN.Trace.Textual    as Trace.Textual
 
 {-------------------------------------------------------------------------------
   Prelude
@@ -38,6 +38,6 @@ main = do
     input <- parseIO optionsInput parseTerm =<< readFile optionsInput
     let trace = limitSteps optionsMaxNumSteps $ traceTerm (prelude, input)
     when optionsShowTrace $
-      putStrLn $ Trace.Textual.visualize trace
+      putStrLn $ Trace.Textual.render trace
     forM_ optionsJsOutput $ \file ->
-      writeFile file $ Trace.HTML.toJS optionsJsName trace
+      writeFile file $ Trace.JavaScript.render optionsJsName trace

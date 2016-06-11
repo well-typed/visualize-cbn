@@ -1,10 +1,10 @@
-module CBN.Trace.Textual (visualize) where
+module CBN.Trace.Textual (render) where
 
 import CBN.Trace
 import CBN.Pretty.Doc
 
-visualize :: Trace -> String
-visualize = go 0
+render :: Trace -> String
+render = go 0
   where
     go :: Int -> Trace -> String
     go n (Trace (hp, e) c) =
