@@ -29,6 +29,7 @@ instance ToMarkup a => ToMarkup (Heap a) where
       go (ptr, term) =
         H.tr $ do
           H.td $ toHtml ptr
+          H.td $ "="
           H.td $ toHtml term
 
 instance ToMarkup Prim where toMarkup = toHtml . pretty

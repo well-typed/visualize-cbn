@@ -36,7 +36,7 @@ main :: IO ()
 main = do
     Options{..} <- getOptions
     input <- parseIO optionsInput parseTerm =<< readFile optionsInput
-    let trace = limitSteps optionsMaxNumSteps $ traceTerm (prelude, input)
+    let trace = summarize optionsSummarize $ traceTerm (prelude, input)
     when optionsShowTrace $
       putStrLn $ Trace.Textual.render trace
     forM_ optionsJsOutput $ \file ->
