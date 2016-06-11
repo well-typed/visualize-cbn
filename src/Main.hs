@@ -6,6 +6,7 @@ import CBN.Language
 import CBN.Parser
 import CBN.Trace
 import CBN.Trace.Textual as Trace.Textual
+import CBN.Trace.HTML    as Trace.HTML
 
 {-------------------------------------------------------------------------------
   Examples
@@ -32,6 +33,6 @@ prelude = initHeap [
 -------------------------------------------------------------------------------}
 
 main :: IO ()
-main = putStrLn $ Trace.Textual.visualize
+main = putStrLn $ Trace.HTML.toJS "lengthEnumFromTo"
                 $ limitSteps 1000
                 $ trace (prelude, exLengthEnumFromTo)

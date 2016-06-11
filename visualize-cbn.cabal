@@ -25,10 +25,14 @@ executable visualize-cbn
                        CBN.Pretty
                        CBN.Subst
                        CBN.Trace
+                       CBN.Trace.Textual
+                       CBN.Trace.HTML
                        CBN.Util.Map
                        CBN.Util.Snoc
   build-depends:       base >=4.8 && <4.9
                      , ansi-wl-pprint
+                     , blaze-html
+                     , blaze-markup
                      , containers
                      , diagrams-cairo
                      , mtl
