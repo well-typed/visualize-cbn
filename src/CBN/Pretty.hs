@@ -16,49 +16,41 @@ instance Pretty Ptr where pretty (Ptr n) = text "@" <> pretty n
 instance Pretty Pat where
   pretty (Pat c xs) = hsep (pretty c : map pretty xs)
 
-instance Pretty Match where
-  pretty (Match pat term) = pretty pat <+> text "->" <+> pretty term
-
 instance Pretty Prim where
   pretty (PInt n) = pretty n
   pretty PAdd     = text "add"
 
 instance Pretty Term where
-  pretty = go pTop
+  pretty = go Top
     where
-      go :: Int -> Term -> Doc
-      go _ (TVar x)        = pretty x
-      go _ (TPtr n)        = pretty n
-      go p (TPrim prim ts) = parensIf (p > pPrim) $
-                               hsep (pretty prim : map (go pPrim) ts)
-      go p (TApp e1 e2)    = parensIf (p > pApp) $
-                               go pApp e1 <+> go pApp e2
-      go p (TLam x e)      = parensIf (p > pLam) $
-                               backslash <> pretty x <+> text "->" <+> go pLam e
-      go p (TLet x e1 e2)  = parensIf (p > pLet) $
-                                   text "let" <+> pretty x <+> text "=" <+> pretty e1
-                               </> text "in" <+> pretty e2
-      go p (TCon c es)     = parensIf (p > pCon) $
-                               hsep (pretty c : map (go pCon) es)
-      go p (TPat e ms)     = parensIf (p > pPat) $
-                                   (text "case" <+> go pTop e <+> lbrace)
-                               </> align (goMatches ms)
-                               </> rbrace
+      go :: FixityContext -> Term -> Doc
+      go _  (TVar x)       = pretty x
+      go _  (TPtr n)       = pretty n
+      go fc (TApp e1 e2)   = parensIf (needsParens fc Ap) $
+                               go (L Ap) e1 <+> go (R Ap) e2
+      go _  (TPrim p [])   = pretty p
+      go fc (TPrim p ts)   = parensIf (needsParens fc Ap) $
+                               hsep (pretty p : map (go (R Ap)) ts)
+      go _  (TCon c [])    = pretty c
+      go fc (TCon c es)    = parensIf (needsParens fc Ap) $
+                               hsep (pretty c : map (go (R Ap)) es)
+      go fc (TLam x e)     = parensIf (needsParens fc Lam) $
+                               backslash <> pretty x <+> text "->" <+> go (R Lam) e
+      go fc (TLet x e1 e2) = parensIf (needsParens fc Let) $
+                                   text "let" <+> pretty x <+> text "=" <+> go (L Let) e1
+                               </> text "in" <+> go (R Let) e2
+      go fc (TPat e ms)    = parensIf (needsParens fc Case) $
+                                  (text "case" <+> go (L Case) e <+> lbrace)
+                              </> align (goMatches ms)
+                              </> rbrace
+
+      goMatch :: Match -> Doc
+      goMatch (Match pat term) = pretty pat <+> text "->" <+> go (R Case) term
 
       goMatches :: [Match] -> Doc
-      goMatches []     = empty
-      goMatches [m]    = pretty m
-      goMatches (m:ms) = indent 2 (pretty m)
-                     </> text ";" <+> goMatches ms
-
-      -- operator precedence
-      pApp  = 6
-      pCon  = 5
-      pPrim = 4
-      pPat  = 3
-      pLet  = 2
-      pLam  = 1
-      pTop  = 0
+      goMatches = mconcat
+                . punctuate (semi <> softline)
+                . map (indent 2 . goMatch)
 
 instance Pretty a => Pretty (Heap a) where
   pretty (Heap heap) = vcat $ map go (Map.toList heap)
@@ -71,6 +63,48 @@ instance Pretty a => Pretty (Heap a) where
 -------------------------------------------------------------------------------}
 
 parensIf :: Bool -> Doc -> Doc
-parensIf b = parens
---parensIf False = id
---parensIf True  = parens
+parensIf False = id
+parensIf True  = parens
+
+{-------------------------------------------------------------------------------
+  Dealing with precedence
+
+  Adapted from
+  <https://mail.haskell.org/pipermail/haskell-cafe/2008-January/038501.html>.
+-------------------------------------------------------------------------------}
+
+data Operator        = Ap | Lam | Let | Case              deriving Eq
+data Assoc           = AssocLeft | AssocRight | AssocNone deriving Eq
+data FixityContext   = Top | L Operator | R Operator
+type PartialOrdering = Maybe Ordering
+
+assoc :: Operator -> Assoc
+assoc Ap   = AssocLeft
+assoc Lam  = AssocRight
+assoc Case = AssocRight
+assoc Let  = AssocRight
+
+comparePrec :: Operator -> Operator -> PartialOrdering
+comparePrec op1 op2 | op1 == op2 = Just EQ
+comparePrec Ap  _   = Just GT
+comparePrec _   Ap  = Just LT
+comparePrec _   _   = Just EQ
+
+needsParens :: FixityContext -> Operator -> Bool
+needsParens Top _  = False
+needsParens (L ctxt) op
+    | comparePrec ctxt op == Just LT = False
+    | comparePrec ctxt op == Just GT = True
+    | comparePrec ctxt op == Nothing = True
+    -- otherwise the two operators have the same precedence
+    | assoc ctxt /= assoc op         = True
+    | assoc ctxt == AssocLeft        = False
+    | otherwise                      = True
+needsParens (R ctxt) op
+    | comparePrec ctxt op == Just LT = False
+    | comparePrec ctxt op == Just GT = True
+    | comparePrec ctxt op == Nothing = True
+    -- otherwise the two operators have the same precedence
+    | assoc ctxt /= assoc op         = True
+    | assoc ctxt == AssocRight       = False
+    | otherwise                      = True

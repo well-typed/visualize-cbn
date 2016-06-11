@@ -29,7 +29,7 @@ trace = go 0 emptyHeap
   Examples
 -------------------------------------------------------------------------------}
 
-ex1, ex2, ex3 :: Term
+ex1, ex2, ex3, ex4, ex5, ex6, ex7 :: Term
 ex1 = [term| \x -> x |]
 ex2 = [term| (\x -> x x) (\x -> x x) |]
 ex3 = [term| let length = \xs ->
@@ -39,6 +39,10 @@ ex3 = [term| let length = \xs ->
                  }
              in length (Cons Unit (Cons Unit (Cons Unit Nil)))
            |]
+ex4 = [term| \x -> \y -> y |]
+ex5 = [term| case Nil of { Nil -> case Nil of { Nil -> 0 } } |]
+ex6 = [term| let x = 0 in let y = 1 in x |]
+ex7 = [term| let x = 0 in case x of { Nil -> 1 } |]
 
 {-------------------------------------------------------------------------------
   Main
