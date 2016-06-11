@@ -72,7 +72,7 @@ instance Pretty Description where
   pretty StepBeta         = text "beta reduction"
   pretty (StepApply f)    = text "apply" <+> pretty f
   pretty (StepDelta p ps) = text "delta: " <+> hsep (map pretty (p:ps))
-  pretty StepMatch        = text "match"
+  pretty (StepMatch c)    = text "match" <+> pretty c
   pretty (StepIf b)       = text "if" <+> pretty b
 
 {-------------------------------------------------------------------------------

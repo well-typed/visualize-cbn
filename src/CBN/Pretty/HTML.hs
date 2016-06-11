@@ -97,7 +97,7 @@ instance ToMarkup Description where
   toMarkup StepBeta         = "beta reduction"
   toMarkup (StepApply f)    = "apply " >> toHtml f
   toMarkup (StepDelta p ps) = "delta: " >> punctuate " " (map toHtml (p:ps))
-  toMarkup StepMatch        = "match"
+  toMarkup (StepMatch c)    = "match " >> toHtml c
   toMarkup (StepIf b)       = "if " >> toHtml b
 
 {-------------------------------------------------------------------------------

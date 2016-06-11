@@ -26,7 +26,7 @@ data Description =
   | StepDelta Prim [Prim]
 
     -- | Pattern-match
-  | StepMatch
+  | StepMatch Con
 
     -- | Evaluated conditional
   | StepIf Bool
@@ -77,7 +77,7 @@ step (hp, TCase e ms) =
           Nothing -> Stuck "Non-exhaustive pattern match"
           Just (xs, e') ->
             if length xs == length es
-              then Step StepMatch $ allocSubst NonRecBinding (zip xs es) (hp, e')
+              then Step (StepMatch c) $ allocSubst NonRecBinding (zip xs es) (hp, e')
               else Stuck $ "Invalid pattern match (cannot match " ++ show (xs, es) ++ ")"
 step (hp, TPrim p es) =
     case stepPrimArgs hp es of
