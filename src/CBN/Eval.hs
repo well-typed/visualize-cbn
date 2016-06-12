@@ -48,10 +48,10 @@ data Step =
 
 -- | Single execution step (small step semantics)
 step :: (Heap Term, Term) -> Step
-step (_, TVar (Var x)) = Stuck $ "free variable " ++ show x
-step (_, TLam x e)     = WHNF $ VLam x e
-step (_, TCon c es)    = WHNF $ VCon c es
-step (_, TPrim p [])   = WHNF $ VPrim p
+step (_, TVar (Var x))         = Stuck $ "free variable " ++ show x
+step (_, TLam x e)             = WHNF $ VLam x e
+step (_, TCon ces)             = WHNF $ VCon ces
+step (_, TPrim (PrimApp p [])) = WHNF $ VPrim p
 step (hp, TPtr ptr) =
     case step (hp, deref (hp, ptr)) of
       Step d (hp', e') -> Step d (mutate (hp', ptr) e', TPtr ptr)
@@ -64,40 +64,37 @@ step (hp, TApp e1 e2) = do
                   TPtr ptr   -> StepApply ptr
                   _otherwise -> StepBeta
     case step (hp, e1) of
-      Step d (hp', e1')     -> Step d (hp', TApp e1' e2)
-      Stuck err             -> Stuck err
-      WHNF (VCon (Con c) _) -> Stuck $ "Cannot apply " ++ show c
-      WHNF (VLam x e1')     -> Step descr $ allocSubst NonRecBinding [(x,e2)] (hp, e1')
-      WHNF (VPrim _)        -> Stuck $ "Cannot apply primitive function"
+      Step d (hp', e1') -> Step d (hp', TApp e1' e2)
+      Stuck err         -> Stuck err
+      WHNF (VLam x e1') -> Step descr $ allocSubst NonRecBinding [(x,e2)] (hp, e1')
+      WHNF _            -> Stuck "expected lambda"
 step (hp, TCase e ms) =
     case step (hp, e) of
       Step d (hp', e') -> Step d (hp', TCase e' ms)
       Stuck err        -> Stuck err
       WHNF (VLam _ _)  -> Stuck "cannot pattern match on lambda"
       WHNF (VPrim _)   -> Stuck "cannot pattern match on primitive values"
-      WHNF (VCon c es) ->
+      WHNF (VCon (ConApp c es)) ->
         case findMatch c ms of
           Nothing -> Stuck "Non-exhaustive pattern match"
           Just (xs, e') ->
             if length xs == length es
               then Step (StepMatch c) $ allocSubst NonRecBinding (zip xs es) (hp, e')
               else Stuck $ "Invalid pattern match (cannot match " ++ show (xs, es) ++ ")"
-step (hp, TPrim p es) =
+step (hp, TPrim (PrimApp p es)) =
     case stepPrimArgs hp es of
-      PrimStep d hp' es' -> Step d (hp', TPrim p es')
+      PrimStep d hp' es' -> Step d (hp', TPrim (PrimApp p es'))
       PrimWHNF vs        -> case delta p vs of
                               Left err -> Stuck err
-                              Right e' -> Step (StepDelta p vs) (hp, e')
+                              Right e' -> Step (StepDelta p vs) (hp, valueToTerm e')
       PrimStuck err      -> Stuck err
 step (hp, TIf c t f) =
     case step (hp, c) of
       Step d (hp', c') -> Step d (hp', TIf c' t f)
       Stuck err        -> Stuck err
-      WHNF (VLam _ _)  -> Stuck "expected bool"
-      WHNF (VPrim _)   -> Stuck "expected bool"
-      WHNF (VCon (Con "True")  []) -> Step (StepIf True)  (hp, t)
-      WHNF (VCon (Con "False") []) -> Step (StepIf False) (hp, f)
-      WHNF (VCon _             _)  -> Stuck "expected bool"
+      WHNF val | val == liftBool True  -> Step (StepIf True)  (hp, t)
+               | val == liftBool False -> Step (StepIf False) (hp, f)
+               | otherwise             -> Stuck "expected bool"
 step (hp, TSeq e1 e2) =
     case step (hp, e1) of
       Step d (hp', e1') -> Step d (hp', TSeq e1' e2)
@@ -138,20 +135,9 @@ findMatch c = go
     go (Match (Pat c' xs) e:ms) | c == c'   = Just (xs, e)
                                 | otherwise = go ms
 
-delta :: Prim -> [Prim] -> Either Error Term
+delta :: Prim -> [Prim] -> Either Error Value
 delta PIAdd [PInt n1, PInt n2] = Right $ liftInt  $ n1 +  n2
 delta PIEq  [PInt n1, PInt n2] = Right $ liftBool $ n1 == n2
 delta PILt  [PInt n1, PInt n2] = Right $ liftBool $ n1 <  n2
 delta PILe  [PInt n1, PInt n2] = Right $ liftBool $ n1 <= n2
 delta _op _args = Left $ "delta: cannot evaluate"
-
-{-------------------------------------------------------------------------------
-  Lifting from Haskell to our object language
--------------------------------------------------------------------------------}
-
-liftInt :: Integer -> Term
-liftInt n = TPrim (PInt n) []
-
-liftBool :: Bool -> Term
-liftBool True  = TCon (Con "True")  []
-liftBool False = TCon (Con "False") []

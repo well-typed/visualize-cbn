@@ -17,27 +17,37 @@ import CBN.Language
 -- do NOT implement capture avoiding substitution. Since we never reduce
 -- under binders, we can never have free variables, and hence this is not
 -- something we need to worry about.
-subst :: Var -> Term -> Term -> Term
-subst x e' = go
-  where
-    go :: Term -> Term
-    go (TVar x')       = if x == x' then e'
-                                    else TVar x'
-    go (TLam x' e)     = if x == x' then TLam x'     e
-                                    else TLam x' (go e)
-    go (TLet x' e1 e2) = if x == x' then TLet x'     e1      e2
-                                    else TLet x' (go e1) (go e2)
-    go (TApp e1 e2)    = TApp (go e1) (go e2)
-    go (TPtr ptr')     = TPtr ptr'
-    go (TCon c es)     = TCon c (map go es)
-    go (TCase e ms)    = TCase (go e) (map goM ms)
-    go (TPrim p es)    = TPrim p (map go es)
-    go (TIf c t f)     = TIf (go c) (go t) (go f)
-    go (TSeq e1 e2)    = TSeq (go e1) (go e2)
+class Subst a where
+  subst :: Var -> Term -> a -> a
 
-    goM :: Match -> Match
-    goM (Match (Pat c xs) e) = if x `elem` xs then Match (Pat c xs)     e
-                                              else Match (Pat c xs) (go e)
+instance Subst a => Subst [a] where
+  subst x e = map (subst x e)
+
+instance Subst Term where
+  subst _ _ (TPtr ptr')     = TPtr ptr'
+  subst x e (TVar x')       = if x == x' then e
+                                         else TVar x'
+  subst x e (TLam x' e1)    = if x == x' then TLam x'             e1
+                                         else TLam x' (subst x e e1)
+  subst x e (TLet x' e1 e2) = if x == x' then TLet x'             e1            e2
+                                         else TLet x' (subst x e e1) (subst x e e2)
+  subst x e (TCon ces)      = TCon  (subst x e ces)
+  subst x e (TPrim pes)     = TPrim (subst x e pes)
+  subst x e (TApp e1 e2)    = TApp  (subst x e e1) (subst x e e2)
+  subst x e (TCase e1 ms)   = TCase (subst x e e1) (subst x e ms)
+  subst x e (TSeq e1 e2)    = TSeq  (subst x e e1) (subst x e e2)
+  subst x e (TIf c t f)     = TIf   (subst x e c)  (subst x e t)  (subst x e f)
+
+instance Subst ConApp where
+  subst x e (ConApp c es) = ConApp c (subst x e es)
+
+instance Subst PrimApp where
+  subst x e (PrimApp p es) = PrimApp p (subst x e es)
+
+instance Subst Match where
+  subst x e (Match (Pat c xs) e') =
+    if x `elem` xs then Match (Pat c xs)            e'
+                   else Match (Pat c xs) (subst x e e')
 
 data RecursiveBinding = RecBinding | NonRecBinding
 
@@ -57,10 +67,10 @@ allocSubst recBind = go
     -- Is this a "simple" term (one that we can substitute freely, even if
     -- multiple times)?
     isSimple :: Term -> Bool
-    isSimple (TPtr _)     = True
-    isSimple (TCon _ [])  = True
-    isSimple (TPrim _ []) = True
-    isSimple _            = False
+    isSimple (TPtr _)               = True
+    isSimple (TCon (ConApp _ []))   = True
+    isSimple (TPrim (PrimApp _ [])) = True
+    isSimple _                      = False
 
     -- Is there (at most) only one use of this term?
     -- (If so, we substitute rather than allocate on the heap)

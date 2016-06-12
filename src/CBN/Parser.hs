@@ -63,10 +63,16 @@ parsePtr = mkPtr <$ char '@' <*> identifier
   where
     mkPtr name = Ptr Nothing (Just name)
 
+parseConApp :: Parser ConApp
+parseConApp = ConApp <$> parseCon <*> many parseTermNoApp
+
+parsePrimApp :: Parser PrimApp
+parsePrimApp = PrimApp <$> parsePrim <*> many parseTermNoApp
+
 parseTerm :: Parser Term
 parseTerm = msum [
-      TCon  <$> parseCon  <*> many parseTermNoApp
-    , TPrim <$> parsePrim <*> many parseTermNoApp
+      TCon  <$> parseConApp
+    , TPrim <$> parsePrimApp
     , TSeq  <$  reservedOp "seq" <*> parseTermNoApp <*> parseTermNoApp
     , nTApp <$> many1 parseTermNoApp
     ] <?> "term"
@@ -102,10 +108,10 @@ parseTermNoApp =  msum [
     ]
   where
     unaryTPrim :: Prim -> Term
-    unaryTPrim p = TPrim p []
+    unaryTPrim p = TPrim (PrimApp p [])
 
     unaryTCon :: Con -> Term
-    unaryTCon c = TCon c []
+    unaryTCon c = TCon (ConApp c [])
 
 parsePrim :: Parser Prim
 parsePrim = msum [

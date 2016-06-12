@@ -62,10 +62,8 @@ instance ToMarkup Term where
       go _  (TPtr ptr)     = toHtml ptr
       go fc (TApp e1 e2)   = parensIf (needsParens fc Ap) $
                                do go (L Ap) e1 ; " " ; go (R Ap) e2
-      go fc (TPrim p es)   = parensIf (needsParens fc Ap && not (null es)) $
-                               punctuate " " $ toHtml p : map (go (R Ap)) es
-      go fc (TCon c es)    = parensIf (needsParens fc Ap && not (null es)) $
-                               punctuate " " $ toHtml c : map (go (R Ap)) es
+      go fc (TPrim pes)    = goPrimApp fc pes
+      go fc (TCon ces)     = goConApp  fc ces
       go fc (TLam x e)     = parensIf (needsParens fc Lam) $ do
                                let (xs, e') = collectArgs e
                                "\\"
@@ -87,6 +85,16 @@ instance ToMarkup Term where
                                kw " else " ; go (R Case) f
       go fc (TSeq e1 e2)   = parensIf (needsParens fc Ap) $ do
                                kw "seq " ; go (R Ap) e1 ; " " ; go (R Ap) e2
+
+      goPrimApp :: FixityContext -> PrimApp -> Html
+      goPrimApp fc (PrimApp p es) =
+        parensIf (needsParens fc Ap && not (null es)) $
+          punctuate " " $ toHtml p : map (go (R Ap)) es
+
+      goConApp :: FixityContext -> ConApp -> Html
+      goConApp fc (ConApp c es) =
+        parensIf (needsParens fc Ap && not (null es)) $
+          punctuate " " $ toHtml c : map (go (R Ap)) es
 
       goMatch :: Match -> Html
       goMatch (Match pat e) = do nbsp ; nbsp ; toMarkup pat ; " -> " ; go (R Case) e

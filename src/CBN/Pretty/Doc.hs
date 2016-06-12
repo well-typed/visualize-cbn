@@ -35,10 +35,8 @@ instance Pretty Term where
       go _  (TPtr n)       = pretty n
       go fc (TApp e1 e2)   = parensIf (needsParens fc Ap) $
                                go (L Ap) e1 <+> go (R Ap) e2
-      go fc (TPrim p es)   = parensIf (needsParens fc Ap && not (null es)) $
-                               hsep (pretty p : map (go (R Ap)) es)
-      go fc (TCon c es)    = parensIf (needsParens fc Ap && not (null es)) $
-                               hsep (pretty c : map (go (R Ap)) es)
+      go fc (TPrim pes )   = goPrimApp fc pes
+      go fc (TCon ces)     = goConApp  fc ces
       go fc (TLam x e)     = parensIf (needsParens fc Lam) $
                                backslash <> pretty x <+> text "->" <+> go (R Lam) e
       go fc (TLet x e1 e2) = parensIf (needsParens fc Let) $
@@ -57,6 +55,16 @@ instance Pretty Term where
 
       goMatch :: Match -> Doc
       goMatch (Match pat term) = pretty pat <+> text "->" <+> go (R Case) term
+
+      goPrimApp :: FixityContext -> PrimApp -> Doc
+      goPrimApp fc (PrimApp p es) =
+        parensIf (needsParens fc Ap && not (null es)) $
+          hsep (pretty p : map (go (R Ap)) es)
+
+      goConApp :: FixityContext -> ConApp -> Doc
+      goConApp fc (ConApp c es) =
+        parensIf (needsParens fc Ap && not (null es)) $
+          hsep (pretty c : map (go (R Ap)) es)
 
       goMatches :: [Match] -> Doc
       goMatches = mconcat

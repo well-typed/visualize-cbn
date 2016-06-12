@@ -7,6 +7,8 @@ module CBN.Language (
   , Pat(..)
   , Match(..)
   , Prim(..)
+  , ConApp(..)
+  , PrimApp(..)
   , Term(..)
     -- * Values
   , Value(..)
@@ -14,6 +16,9 @@ module CBN.Language (
     -- * Auxiliary
   , nTApp
   , collectArgs
+    -- * Lifting from the meta language to the object language
+  , liftInt
+  , liftBool
   ) where
 
 import Control.Arrow (first)
@@ -42,11 +47,11 @@ newtype Con = Con { conName :: String }
 
 -- | Pattern
 data Pat = Pat Con [Var]
-  deriving (Show, Data)
+  deriving (Show, Data, Eq)
 
 -- | A single match in a case statement
 data Match = Match Pat Term
-  deriving (Show, Data)
+  deriving (Show, Data, Eq)
 
 -- | Primitives
 data Prim =
@@ -55,7 +60,15 @@ data Prim =
   | PIEq
   | PILt
   | PILe
-  deriving (Show, Data)
+  deriving (Show, Data, Eq)
+
+-- | Application of a constructor to some arguments
+data ConApp = ConApp Con [Term]
+  deriving (Show, Data, Eq)
+
+-- | Application of a primitive to some arguments
+data PrimApp = PrimApp Prim [Term]
+  deriving (Show, Data, Eq)
 
 -- | Term
 data Term =
@@ -64,12 +77,12 @@ data Term =
   | TLam Var Term         -- ^ Lambda abstraction
   | TLet Var Term Term    -- ^ (Recursive) let binding
   | TPtr Ptr              -- ^ Heap pointer
-  | TCon Con [Term]       -- ^ Constructor application
+  | TCon ConApp           -- ^ Constructor application
   | TCase Term [Match]    -- ^ Pattern match
-  | TPrim Prim [Term]     -- ^ Primitives (built-ins)
+  | TPrim PrimApp          -- ^ Primitives (built-ins)
   | TIf Term Term Term    -- ^ Conditional
   | TSeq Term Term        -- ^ Force evaluation
-  deriving (Show, Data)
+  deriving (Show, Data, Eq)
 
 {-------------------------------------------------------------------------------
   Values
@@ -77,15 +90,23 @@ data Term =
 
 -- | Values (terms in weak head normal form)
 data Value =
+    -- | Lambda abstractions are values
     VLam Var Term
-  | VCon Con [Term]
+
+    -- | Constructor applications are values
+  | VCon ConApp
+
+    -- | Primitive values are values
+    --
+    -- Note that an application of a primitive value to some term is NOT a
+    -- value: primitive functions are assumed strict in all arguments
   | VPrim Prim
-  deriving (Show)
+  deriving (Show, Eq)
 
 valueToTerm :: Value -> Term
-valueToTerm (VLam x e)  = TLam x e
-valueToTerm (VCon c es) = TCon c es
-valueToTerm (VPrim p)   = TPrim p []
+valueToTerm (VLam x e) = TLam x e
+valueToTerm (VCon ces) = TCon ces
+valueToTerm (VPrim p)  = TPrim (PrimApp p [])
 
 {-------------------------------------------------------------------------------
   Auxiliary
@@ -105,3 +126,14 @@ nTApp = go . Snoc.fromList
 collectArgs :: Term -> ([Var], Term)
 collectArgs (TLam x e) = first (x:) $ collectArgs e
 collectArgs e          = ([], e)
+
+{-------------------------------------------------------------------------------
+  Lifting from Haskell to our object language
+-------------------------------------------------------------------------------}
+
+liftInt :: Integer -> Value
+liftInt = VPrim . PInt
+
+liftBool :: Bool -> Value
+liftBool True  = VCon $ ConApp (Con "True")  []
+liftBool False = VCon $ ConApp (Con "False") []
