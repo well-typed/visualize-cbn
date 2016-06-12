@@ -21,7 +21,7 @@ module CBN.Language (
   , liftBool
   ) where
 
-import Control.Arrow (first)
+import Data.Bifunctor
 import Data.Data (Data(..))
 import Data.String (IsString)
 

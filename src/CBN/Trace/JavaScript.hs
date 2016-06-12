@@ -2,12 +2,16 @@ module CBN.Trace.JavaScript (render) where
 
 import Data.Set (Set)
 import Text.Blaze.Html.Renderer.String
+import Text.Blaze.Html5 (toHtml)
 import qualified Data.Set as Set
 
 import CBN.Eval
 import CBN.Heap
-import CBN.Pretty.HTML
+import CBN.Pretty
 import CBN.Trace
+import CBN.Util.Doc.Rendered.HTML ()
+import qualified CBN.Util.Doc          as Doc
+import qualified CBN.Util.Doc.Rendered as Rendered
 
 render :: String -> Trace -> String
 render name = \tr ->
@@ -36,8 +40,8 @@ render name = \tr ->
         mkFrame :: Set Ptr -> String -> String
         mkFrame garbage status =
              "if(frame == " ++ show n ++ ") {\n"
-          ++ set "heap" (renderHtml (heapToHtml garbage hp))
-          ++ set "term" (renderHtml (toHtml e))
+          ++ set "heap" (pretty (heapToDoc garbage hp))
+          ++ set "term" (pretty e)
           ++ set "status" status
           ++ "}\n"
 
@@ -45,10 +49,16 @@ render name = \tr ->
     mkErr = ("error: " ++)
 
     mkDesc :: Description -> String
-    mkDesc d = "next step: " ++ renderHtml (toHtml d)
+    mkDesc d = "next step: " ++ pretty d
 
     set :: String -> String -> String
     set suffix val = innerHTML suffix ++ " = " ++ show val ++ ";\n"
 
     innerHTML :: String -> String
     innerHTML suffix = "document.getElementById(\"" ++ name ++ "_" ++ suffix ++ "\").innerHTML"
+
+    pretty :: ToDoc a => a -> String
+    pretty = renderHtml
+           . toHtml
+           . Doc.render (\r -> Rendered.width r <= 80)
+           . toDoc

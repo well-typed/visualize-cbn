@@ -23,20 +23,27 @@ executable visualize-cbn
                        CBN.Language
                        CBN.Options
                        CBN.Parser
-                       CBN.Pretty.Doc
-                       CBN.Pretty.HTML
+                       CBN.Pretty
                        CBN.Pretty.Precedence
                        CBN.Subst
                        CBN.Trace
                        CBN.Trace.JavaScript
                        CBN.Trace.Textual
+                       CBN.Util.Doc
+                       CBN.Util.Doc.Rendered
+                       CBN.Util.Doc.Rendered.ANSI
+                       CBN.Util.Doc.Rendered.HTML
+                       CBN.Util.Doc.Rendered.String
+                       CBN.Util.Doc.Style
                        CBN.Util.Map
                        CBN.Util.Snoc
   build-depends:       base >=4.8 && <4.9
-                     , ansi-wl-pprint
+                     , ansi-terminal
                      , blaze-html
                      , blaze-markup
                      , containers
+                     , data-default
+                     , mtl
                      , optparse-applicative
                      , parsec
                      , template-haskell
@@ -44,6 +51,7 @@ executable visualize-cbn
   default-language:    Haskell2010
   default-extensions:  DeriveDataTypeable
                        ExistentialQuantification
+                       FlexibleInstances
                        LambdaCase
                        RecordWildCards
                        ScopedTypeVariables

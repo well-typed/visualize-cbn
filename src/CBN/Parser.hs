@@ -6,9 +6,9 @@ module CBN.Parser (
   , parseIO
   ) where
 
-import Control.Arrow (first)
 import Control.Exception
 import Control.Monad
+import Data.Bifunctor
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Quote
 import Text.Parsec

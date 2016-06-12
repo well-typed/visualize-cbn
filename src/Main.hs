@@ -13,7 +13,7 @@ main = do
     Options{..} <- getOptions
     input <- parseIO optionsInput parseModule =<< readFile optionsInput
     let trace = summarize optionsSummarize $ traceTerm optionsGC input
-    when optionsShowTrace $
-      putStrLn $ Trace.Textual.render trace
+    when optionsShowTrace $      
+      Trace.Textual.renderIO trace
     forM_ optionsJsOutput $ \file ->
       writeFile file $ Trace.JavaScript.render optionsJsName trace
