@@ -1,10 +1,12 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 module CBN.Parser (
     parseTerm
+  , parseModule
   , term
   , parseIO
   ) where
 
+import Control.Arrow (first)
 import Control.Exception
 import Control.Monad
 import Language.Haskell.TH (Q)
@@ -63,41 +65,41 @@ parsePtr = mkPtr <$ char '@' <*> identifier
 
 parseTerm :: Parser Term
 parseTerm = msum [
-      TCon  <$> parseCon  <*> many go
-    , TPrim <$> parsePrim <*> many go
-    , nTApp <$> many1 go
+      TCon  <$> parseCon  <*> many parseTermNoApp
+    , TPrim <$> parsePrim <*> many parseTermNoApp
+    , nTApp <$> many1 parseTermNoApp
     ] <?> "term"
-  where
-    -- terms without top-level application
-    go :: Parser Term
-    go = msum [
-          unaryTPrim <$> parsePrim
-        , unaryTCon  <$> parseCon
-        , TPtr  <$> parsePtr
-        , TLam  <$  reservedOp "\\"
-                <*> parseVar
-                <*  reservedOp "->"
-                <*> parseTerm
-        , TLet  <$  reserved "let"
-                <*> parseVar
-                <*  reservedOp "="
-                <*> parseTerm
-                <*  reservedOp "in"
-                <*> parseTerm
-        , TIf   <$  reserved "if"
-                <*> parseTerm
-                <*  reserved "then"
-                <*> parseTerm
-                <*  reserved "else"
-                <*> parseTerm         
-        , TCase <$  reserved "case"
-                <*> parseTerm
-                <*  reserved "of"
-                <*> braces (parseMatch `sepBy` reservedOp ";")
-        , TVar  <$> parseVar
-        , parens parseTerm
-        ]
 
+-- | Parser for terms without allowing for top-level application
+parseTermNoApp :: Parser Term
+parseTermNoApp =  msum [
+      unaryTPrim <$> parsePrim
+    , unaryTCon  <$> parseCon
+    , TPtr  <$> parsePtr
+    , TLam  <$  reservedOp "\\"
+            <*> parseVar
+            <*  reservedOp "->"
+            <*> parseTerm
+    , TLet  <$  reserved "let"
+            <*> parseVar
+            <*  reservedOp "="
+            <*> parseTerm
+            <*  reservedOp "in"
+            <*> parseTerm
+    , TIf   <$  reserved "if"
+            <*> parseTerm
+            <*  reserved "then"
+            <*> parseTerm
+            <*  reserved "else"
+            <*> parseTerm
+    , TCase <$  reserved "case"
+            <*> parseTerm
+            <*  reserved "of"
+            <*> braces (parseMatch `sepBy` reservedOp ";")
+    , TVar  <$> parseVar
+    , parens parseTerm
+    ]
+  where
     unaryTPrim :: Prim -> Term
     unaryTPrim p = TPrim p []
 
@@ -105,13 +107,29 @@ parseTerm = msum [
     unaryTCon c = TCon c []
 
 parsePrim :: Parser Prim
-parsePrim   = msum [
+parsePrim = msum [
       PInt  <$> natural
     , PIAdd <$  reserved "add"
     , PILt  <$  reserved "lt"
     , PIEq  <$  reserved "eq"
     , PILe  <$  reserved "le"
     ]
+
+-- | Our input files consist of an initial heap and the term to be evaluated
+parseModule :: Parser (Heap Term, Term)
+parseModule = (,) <$> (mkHeap <$> many parseFunDef) <*> parseMain
+  where
+    parseFunDef :: Parser (Var, Term)
+    parseFunDef = (,) <$> parseVar
+                      <*  reservedOp "="
+                      <*> parseTermNoApp
+                      <?> "function definition"
+
+    parseMain :: Parser Term
+    parseMain = reserved "main" >> reservedOp "=" *> parseTerm
+
+    mkHeap :: [(Var, Term)] -> Heap Term
+    mkHeap = initHeap . map (first varName)
 
 {-------------------------------------------------------------------------------
   Lexical analysis
@@ -130,6 +148,7 @@ lexer = P.makeTokenParser haskellDef {
         , "if"
         , "then"
         , "else"
+        , "main"
         ]
     , P.reservedOpNames = [
           "\\"
