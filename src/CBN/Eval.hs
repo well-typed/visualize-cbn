@@ -30,6 +30,9 @@ data Description =
 
     -- | Evaluated conditional
   | StepIf Bool
+
+    -- | Seq finished evaluating its left argument
+  | StepSeq
   deriving (Show)
 
 data Step =
@@ -95,6 +98,11 @@ step (hp, TIf c t f) =
       WHNF (VCon (Con "True")  []) -> Step (StepIf True)  (hp, t)
       WHNF (VCon (Con "False") []) -> Step (StepIf False) (hp, f)
       WHNF (VCon _             _)  -> Stuck "expected bool"
+step (hp, TSeq e1 e2) =
+    case step (hp, e1) of
+      Step d (hp', e1') -> Step d (hp', TSeq e1' e2)
+      Stuck err         -> Stuck err
+      WHNF _            -> Step StepSeq (hp, e2)
 
 -- | The result of stepping the arguments to an n-ary primitive function
 data StepPrimArgs =

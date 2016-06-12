@@ -78,13 +78,15 @@ instance ToMarkup Term where
                                go (R Let) e2
       go fc (TCase e ms)   = parensIf (needsParens fc Case) $ do
                                 kw "case " ; go (L Case) e
-                                kw " of " ; " {"
-                                H.div $ punctuate (";" >> H.br) (map goMatch ms)
-                                " }"
+                                kw " of " ; " {" ; H.br
+                                punctuate (";" >> H.br) (map goMatch ms)
+                                "}"
       go fc (TIf c t f)    = parensIf (needsParens fc If) $ do
                                kw "if " ; go (L If) c
                                kw " then " ; go (R Case) t
                                kw " else " ; go (R Case) f
+      go fc (TSeq e1 e2)   = parensIf (needsParens fc Ap) $ do
+                               kw "seq " ; go (R Ap) e1 ; " " ; go (R Ap) e2
 
       goMatch :: Match -> Html
       goMatch (Match pat e) = do nbsp ; nbsp ; toMarkup pat ; " -> " ; go (R Case) e
@@ -99,6 +101,7 @@ instance ToMarkup Description where
   toMarkup (StepDelta p ps) = "delta: " >> punctuate " " (map toHtml (p:ps))
   toMarkup (StepMatch c)    = "match " >> toHtml c
   toMarkup (StepIf b)       = "if " >> toHtml b
+  toMarkup StepSeq          = "seq"
 
 {-------------------------------------------------------------------------------
   Auxiliary

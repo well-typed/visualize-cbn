@@ -52,6 +52,8 @@ instance Pretty Term where
                                text "if" <+> go (L If) c
                                  <+> text "then" <+> go (R If) t
                                  <+> text "else" <+> go (R If) f
+      go fc (TSeq e1 e2)   = parensIf (needsParens fc Ap) $
+                               text "seq" <+> go (R Ap) e1 <+> go (R Ap) e2
 
       goMatch :: Match -> Doc
       goMatch (Match pat term) = pretty pat <+> text "->" <+> go (R Case) term
@@ -74,6 +76,7 @@ instance Pretty Description where
   pretty (StepDelta p ps) = text "delta: " <+> hsep (map pretty (p:ps))
   pretty (StepMatch c)    = text "match" <+> pretty c
   pretty (StepIf b)       = text "if" <+> pretty b
+  pretty StepSeq          = text "seq"
 
 {-------------------------------------------------------------------------------
   Auxiliary

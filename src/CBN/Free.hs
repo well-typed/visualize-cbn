@@ -41,6 +41,7 @@ instance Free Term where
   free (TLet x e1 e2) = Map.delete x $ free [e1, e2]
   free (TPrim _ es)   = free es
   free (TIf c t f)    = free [c, t, f]
+  free (TSeq e1 e2)   = free [e1, e2]
 
 {-------------------------------------------------------------------------------
   Used pointers
@@ -65,3 +66,4 @@ instance Pointers Term where
   pointers (TLet _ e1 e2) = pointers [e1, e2]
   pointers (TPrim _ es)   = pointers es
   pointers (TIf c t f)    = pointers [c, t, f]
+  pointers (TSeq e1 e2)   = pointers [e1, e2]

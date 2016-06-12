@@ -67,6 +67,7 @@ parseTerm :: Parser Term
 parseTerm = msum [
       TCon  <$> parseCon  <*> many parseTermNoApp
     , TPrim <$> parsePrim <*> many parseTermNoApp
+    , TSeq  <$  reservedOp "seq" <*> parseTermNoApp <*> parseTermNoApp
     , nTApp <$> many1 parseTermNoApp
     ] <?> "term"
 
@@ -149,6 +150,7 @@ lexer = P.makeTokenParser haskellDef {
         , "then"
         , "else"
         , "main"
+        , "seq"
         ]
     , P.reservedOpNames = [
           "\\"

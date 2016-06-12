@@ -68,6 +68,7 @@ data Term =
   | TCase Term [Match]    -- ^ Pattern match
   | TPrim Prim [Term]     -- ^ Primitives (built-ins)
   | TIf Term Term Term    -- ^ Conditional
+  | TSeq Term Term        -- ^ Force evaluation
   deriving (Show, Data)
 
 {-------------------------------------------------------------------------------
