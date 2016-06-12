@@ -74,7 +74,7 @@ instance ToMarkup Term where
                                go (R Lam) e'
       go fc (TLet x e1 e2) = parensIf (needsParens fc Let) $ do
                                kw "let " ; toHtml x ; " = " ; go (L Let) e1 ;
-                               kw "in" ; H.br
+                               kw " in" ; H.br
                                go (R Let) e2
       go fc (TCase e ms)   = parensIf (needsParens fc Case) $ do
                                 kw "case " ; go (L Case) e
