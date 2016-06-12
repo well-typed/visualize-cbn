@@ -23,7 +23,7 @@ data Description =
   | StepApply Ptr
 
     -- | Delta-reduction
-  | StepDelta Prim [Prim]
+  | StepDelta PrimApp
 
     -- | Pattern-match
   | StepMatch Con
@@ -84,9 +84,10 @@ step (hp, TCase e ms) =
 step (hp, TPrim (PrimApp p es)) =
     case stepPrimArgs hp es of
       PrimStep d hp' es' -> Step d (hp', TPrim (PrimApp p es'))
-      PrimWHNF vs        -> case delta p vs of
+      PrimWHNF vs        -> let descr = StepDelta (PrimApp p (map (valueToTerm . VPrim) vs))
+                            in case delta p vs of
                               Left err -> Stuck err
-                              Right e' -> Step (StepDelta p vs) (hp, valueToTerm e')
+                              Right e' -> Step descr (hp, valueToTerm e')
       PrimStuck err      -> Stuck err
 step (hp, TIf c t f) =
     case step (hp, c) of

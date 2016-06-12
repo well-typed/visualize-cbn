@@ -8,10 +8,29 @@ module CBN.Pretty.Precedence (
   , needsParens
   ) where
 
-data Operator        = Ap | Lam | Let | Case | If         deriving Eq
-data Assoc           = AssocLeft | AssocRight | AssocNone deriving Eq
-data FixityContext   = Top | L Operator | R Operator
 type PartialOrdering = Maybe Ordering
+
+-- | The operators we use in our language
+data Operator =
+    Ap
+  | Lam
+  | Let
+  | Case
+  | If
+  | Cons
+  | Add
+  | Le
+  deriving Eq
+
+-- | Associativty
+data Assoc =
+    AssocLeft
+  | AssocRight
+  | AssocNone
+  deriving Eq
+
+-- | The context in which we are pretty-printing a term
+data FixityContext = Top | L Operator | R Operator
 
 assoc :: Operator -> Assoc
 assoc Ap   = AssocLeft
@@ -19,6 +38,9 @@ assoc Lam  = AssocRight
 assoc Case = AssocRight
 assoc Let  = AssocRight
 assoc If   = AssocRight
+assoc Cons = AssocRight
+assoc Add  = AssocRight
+assoc Le   = AssocNone
 
 comparePrec :: Operator -> Operator -> PartialOrdering
 comparePrec op1 op2 | op1 == op2 = Just EQ

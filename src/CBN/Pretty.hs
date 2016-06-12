@@ -28,6 +28,7 @@ instance ToDoc Var where
   toDoc (Var x) = style (\st -> st { styleItalic = True }) $ doc x
 
 instance ToDoc Con where
+  toDoc (Con "Nil") = doc "[]"
   toDoc (Con c) = style (\st -> st { styleForeground = Just Red }) $ doc c
 
 instance ToDoc Prim where
@@ -38,15 +39,24 @@ instance ToDoc Prim where
   toDoc PILe     = doc "le"
 
 instance ToDoc PrimApp where
+  toDoc' fc (PrimApp PIAdd [a, b]) = parensIf (needsParens fc Add) $
+    toDoc' (L Add) a <+> doc "+" <+> toDoc' (R Add) b
+  toDoc' fc (PrimApp PILe [a, b]) = parensIf (needsParens fc Le) $
+    toDoc' (L Add) a <+> doc "<=" <+> toDoc' (R Add) b
   toDoc' fc (PrimApp p es) = parensIf (needsParens fc Ap && not (null es)) $
     hsep (toDoc p : map (toDoc' (R Ap)) es)
 
 instance ToDoc ConApp where
+  toDoc' fc (ConApp (Con "Cons") [x, xs]) = parensIf (needsParens fc Cons) $
+    toDoc' (L Cons) x <+> doc ":" <+> toDoc' (R Cons) xs
   toDoc' fc (ConApp c es) = parensIf (needsParens fc Ap && not (null es)) $
     hsep (toDoc c : map (toDoc' (R Ap)) es)
 
 instance ToDoc Pat where
-  toDoc (Pat c xs) = hsep (toDoc c : map toDoc xs)
+  toDoc (Pat (Con "Cons") [x, xs]) =
+    toDoc x <> doc ":" <> toDoc xs
+  toDoc (Pat c xs) =
+    hsep (toDoc c : map toDoc xs)
 
 instance ToDoc Match where
   toDoc' fc = mconcat . matchRow fc
@@ -87,7 +97,7 @@ instance ToDoc Term where
       ]
     where
       x'  = toDoc x
-      e1' = toDoc' (L Let) e1
+      e1' = toDoc' Top     e1
       e2' = toDoc' (R Let) e2
   toDoc' fc (TCase e ms) = parensIfChoice (needsParens fc Case) [
         stack [
@@ -111,18 +121,18 @@ instance ToDoc Term where
       , kw "if" <+> c' <+> kw "then" <+> t' <+> kw "else" <+> f'
       ]
     where
-      c' = toDoc' (L If) c
+      c' = toDoc' Top    c
       t' = toDoc' (R If) t
       f' = toDoc' (R If) f
 
 instance ToDoc Description where
-  toDoc StepAlloc        = doc "allocate"
-  toDoc StepBeta         = doc "beta reduction"
-  toDoc (StepApply f)    = doc "apply"  <+> toDoc f
-  toDoc (StepDelta p ps) = doc "delta:" <+> hsep (map toDoc (p:ps))
-  toDoc (StepMatch c)    = doc "match"  <+> toDoc c
-  toDoc (StepIf b)       = doc "if"     <+> doc (show b)
-  toDoc StepSeq          = doc "seq"
+  toDoc StepAlloc       = doc "allocate"
+  toDoc StepBeta        = doc "beta reduction"
+  toDoc (StepApply f)   = doc "apply"  <+> toDoc f
+  toDoc (StepDelta pes) = doc "delta:" <+> toDoc pes
+  toDoc (StepMatch c)   = doc "match"  <+> toDoc c
+  toDoc (StepIf b)      = doc "if"     <+> doc (show b)
+  toDoc StepSeq         = doc "seq"
 
 -- | For the heap we need to know which pointers we are about to collect
 heapToDoc :: forall a. ToDoc a => Set Ptr -> Heap a -> Doc Style String
