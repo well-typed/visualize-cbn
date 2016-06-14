@@ -30,6 +30,9 @@ data Doc st a =
     -- | Primitive document
     Doc a
 
+    -- | Append two documents
+  | Append (Doc st a) (Doc st a)
+
     -- | Align a bunch of documents like in a table
     --
     -- Outermost list: rows; innermost list: columns
@@ -43,9 +46,8 @@ data Doc st a =
 
 -- | The standard monoidal corresponds to horizontal composition
 instance Monoid a => Monoid (Doc st a) where
-  mempty        = Doc mempty
-  mappend d1 d2 = Table [[d1, d2]]
-  mconcat ds    = Table [ds]
+  mempty  = Doc mempty
+  mappend = Append
 
 -- | Primitive document
 doc :: a -> Doc st a
@@ -73,10 +75,11 @@ stack = Table . map (:[])
 
 -- | Compute all possible ways to render this document
 renderAll :: Default st => Doc st String -> [Rendered st]
-renderAll (Doc str)    = return $ Rendered.fromString str
-renderAll (Choice ds)  = asum (map renderAll ds)
-renderAll (Table dss)  = Rendered.table <$> mapM (mapM renderAll) dss
-renderAll (Style st d) = fmap st <$> renderAll d
+renderAll (Doc str)      = return $ Rendered.fromString str
+renderAll (Choice ds)    = asum (map renderAll ds)
+renderAll (Append d1 d2) = mappend <$> renderAll d1 <*> renderAll d2
+renderAll (Table dss)    = Rendered.table <$> mapM (mapM renderAll) dss
+renderAll (Style st d)   = fmap st <$> renderAll d
 
 render :: Default st => (Rendered st -> Bool) -> Doc st String -> Rendered st
 render p d = fromMaybe (head $ renderAll d) (find p $ renderAll d)

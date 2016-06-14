@@ -17,15 +17,37 @@ import CBN.Util.Doc.Style
 instance ToMarkup (Rendered Style) where
   toMarkup = go . rendered
     where
-      go :: [[(Style, Char)]] -> Html
+      go :: [[Maybe (Style, Char)]] -> Html
       go = sequence_ . intersperse H.br . map goLine
 
-      goLine :: [(Style, Char)] -> Html
-      goLine = sequence_ . map (goGroup . aux) . groupBy ((==) `on` fst)
+      goLine :: [Maybe (Style, Char)] -> Html
+      goLine =
+          sequence_ . map (goGroup . aux) . groupBy sameStyle . rTrim
         where
-          aux :: [(Style, Char)] -> (Style, String)
-          aux []           = error "impossible (groupBy)"
-          aux ((st, c):cs) = (st, c:map snd cs)
+          -- After grouping, find each group and its style
+          aux :: [Maybe (Style, Char)] -> (Style, String)
+          aux []                 = (def, "")
+          aux (Nothing     : cs) = let (st, str) = aux cs in (st, ' ':str)
+          aux (Just (st,c) : cs) = (st, c:map toChar cs)
+
+          toChar :: Maybe (Style, Char) -> Char
+          toChar Nothing      = ' '
+          toChar (Just (_,c)) = c
+
+      -- Are two characters the same style?
+      --
+      -- We regard padding as having a different style from everything else;
+      -- although it doesn't really matter what style we use for padding, if
+      -- we don't do this then something like
+      --
+      -- > (style1, "foo") `padding` (style2, "bar")
+      --
+      -- will not be rendered correctly, since @style1@ would be considered
+      -- equal to @padding@ which would in turn be considered equal to @style2@.
+      sameStyle :: Maybe (Style, Char) -> Maybe (Style, Char) -> Bool
+      sameStyle Nothing        _               = False
+      sameStyle _              Nothing         = False
+      sameStyle (Just (st, _)) (Just (st', _)) = st == st'
 
       goGroup :: (Style, String) -> Html
       goGroup (st, str)
@@ -51,7 +73,7 @@ instance ToMarkup (Rendered Style) where
           | styleItalic
           ]
         , [ "color: " <> toCssColor c <> ";"
-          | Just c <- [styleForeground] 
+          | Just c <- [styleForeground]
           ]
         , [ "background-color: " <> toCssColor c <> ";"
           | Just c <- [styleBackground]

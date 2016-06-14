@@ -3,7 +3,6 @@ module CBN.Util.Doc.Rendered.ANSI (
   ) where
 
 import Control.Monad
-import Data.Char (isSpace)
 import Data.Default
 import Data.IORef
 import Data.List (intersperse)
@@ -18,14 +17,15 @@ write r = do
     go stRef $ rendered r
     ANSI.setSGR [ANSI.Reset]
   where
-    go :: IORef Style -> [[(Style, Char)]] -> IO ()
+    go :: IORef Style -> [[Maybe (Style, Char)]] -> IO ()
     go ref = sequence_ . intersperse (putChar '\n') . map (goLine ref)
 
-    goLine :: IORef Style -> [(Style, Char)] -> IO ()
-    goLine ref cs = do mapM_ (uncurry (goChar ref)) (rTrim cs)
+    goLine :: IORef Style -> [Maybe (Style, Char)] -> IO ()
+    goLine ref = mapM_ (goChar ref) . rTrim
 
-    goChar :: IORef Style -> Style -> Char -> IO ()
-    goChar ref st c = do
+    goChar :: IORef Style -> Maybe (Style, Char) -> IO ()
+    goChar _   Nothing        = putChar ' '
+    goChar ref (Just (st, c)) = do
       activeStyle <- readIORef ref
       when (activeStyle /= st) $ do
         ANSI.setSGR (styleToSGR st)
@@ -48,10 +48,6 @@ write r = do
         | Just c <- [styleBackground]
         ]
       ]
-
-    -- Remove unnecessary padding
-    rTrim :: [(Style, Char)] -> [(Style, Char)]
-    rTrim = reverse . dropWhile (isSpace . snd) . reverse
 
     toAnsiColor :: Color -> ANSI.Color
     toAnsiColor Blue = ANSI.Blue
