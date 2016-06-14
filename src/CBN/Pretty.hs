@@ -28,7 +28,8 @@ instance ToDoc Var where
   toDoc (Var x) = style (\st -> st { styleItalic = True }) $ doc x
 
 instance ToDoc Con where
-  toDoc (Con "Nil") = doc "[]"
+  toDoc (Con "Nil")  = doc "[]"
+  toDoc (Con "Unit") = doc "()"
   toDoc (Con c) = style (\st -> st { styleForeground = Just Red }) $ doc c
 
 instance ToDoc Prim where
@@ -48,19 +49,27 @@ instance ToDoc PrimApp where
   toDoc' fc (PrimApp PIMul [a, b]) = parensIf (needsParens fc Mul) $
     toDoc' (L Mul) a <+> doc "*" <+> toDoc' (R Mul) b
   toDoc' fc (PrimApp PILe [a, b]) = parensIf (needsParens fc Le) $
-    toDoc' (L Add) a <+> doc "<=" <+> toDoc' (R Add) b
+    toDoc' (L Le) a <+> doc "<=" <+> toDoc' (R Le) b
+  toDoc' fc (PrimApp PILt [a, b]) = parensIf (needsParens fc Lt) $
+    toDoc' (L Lt) a <+> doc "<" <+> toDoc' (R Lt) b
+  toDoc' fc (PrimApp PIEq [a, b]) = parensIf (needsParens fc Eq) $
+    toDoc' (L Eq) a <+> doc "==" <+> toDoc' (R Eq) b
   toDoc' fc (PrimApp p es) = parensIf (needsParens fc Ap && not (null es)) $
     hsep (toDoc p : map (toDoc' (R Ap)) es)
 
 instance ToDoc ConApp where
   toDoc' fc (ConApp (Con "Cons") [x, xs]) = parensIf (needsParens fc Cons) $
     toDoc' (L Cons) x <+> doc ":" <+> toDoc' (R Cons) xs
+  toDoc' _fc (ConApp (Con "Pair") [x, xs]) = parensIf True $
+    toDoc' Top x <> doc "," <+> toDoc' Top xs
   toDoc' fc (ConApp c es) = parensIf (needsParens fc Ap && not (null es)) $
     hsep (toDoc c : map (toDoc' (R Ap)) es)
 
 instance ToDoc Pat where
   toDoc (Pat (Con "Cons") [x, xs]) =
     toDoc x <> doc ":" <> toDoc xs
+  toDoc (Pat (Con "Pair") [x, xs]) = parensIf True $
+    toDoc x <> doc "," <> toDoc xs
   toDoc (Pat c xs) =
     hsep (toDoc c : map toDoc xs)
 

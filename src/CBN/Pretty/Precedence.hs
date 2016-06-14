@@ -22,6 +22,8 @@ data Operator =
   | Sub
   | Mul
   | Le
+  | Lt
+  | Eq
   deriving Eq
 
 -- | Associativty
@@ -45,6 +47,8 @@ assoc Add  = AssocRight
 assoc Mul  = AssocRight
 assoc Sub  = AssocNone
 assoc Le   = AssocNone
+assoc Lt   = AssocNone
+assoc Eq   = AssocNone
 
 comparePrec :: Operator -> Operator -> PartialOrdering
 comparePrec op1 op2 | op1 == op2 = Just EQ
