@@ -117,6 +117,8 @@ parsePrim :: Parser Prim
 parsePrim = msum [
       PInt  <$> natural
     , PIAdd <$  reserved "add"
+    , PISub <$  reserved "sub"
+    , PIMul <$  reserved "mul"
     , PILt  <$  reserved "lt"
     , PIEq  <$  reserved "eq"
     , PILe  <$  reserved "le"
@@ -149,6 +151,8 @@ lexer = P.makeTokenParser haskellDef {
         , "let"
         , "in"
         , "add"
+        , "sub"
+        , "mul"
         , "lt"
         , "eq"
         , "le"

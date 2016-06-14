@@ -34,6 +34,8 @@ instance ToDoc Con where
 instance ToDoc Prim where
   toDoc (PInt n) = doc (show n)
   toDoc PIAdd    = doc "add"
+  toDoc PISub    = doc "sub"
+  toDoc PIMul    = doc "mul"
   toDoc PIEq     = doc "eq"
   toDoc PILt     = doc "lt"
   toDoc PILe     = doc "le"
@@ -41,6 +43,10 @@ instance ToDoc Prim where
 instance ToDoc PrimApp where
   toDoc' fc (PrimApp PIAdd [a, b]) = parensIf (needsParens fc Add) $
     toDoc' (L Add) a <+> doc "+" <+> toDoc' (R Add) b
+  toDoc' fc (PrimApp PISub [a, b]) = parensIf (needsParens fc Sub) $
+    toDoc' (L Sub) a <+> doc "-" <+> toDoc' (R Sub) b
+  toDoc' fc (PrimApp PIMul [a, b]) = parensIf (needsParens fc Mul) $
+    toDoc' (L Mul) a <+> doc "*" <+> toDoc' (R Mul) b
   toDoc' fc (PrimApp PILe [a, b]) = parensIf (needsParens fc Le) $
     toDoc' (L Add) a <+> doc "<=" <+> toDoc' (R Add) b
   toDoc' fc (PrimApp p es) = parensIf (needsParens fc Ap && not (null es)) $

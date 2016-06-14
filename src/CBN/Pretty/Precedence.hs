@@ -19,6 +19,8 @@ data Operator =
   | If
   | Cons
   | Add
+  | Sub
+  | Mul
   | Le
   deriving Eq
 
@@ -40,6 +42,8 @@ assoc Let  = AssocRight
 assoc If   = AssocRight
 assoc Cons = AssocRight
 assoc Add  = AssocRight
+assoc Mul  = AssocRight
+assoc Sub  = AssocNone
 assoc Le   = AssocNone
 
 comparePrec :: Operator -> Operator -> PartialOrdering

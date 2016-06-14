@@ -138,6 +138,8 @@ findMatch c = go
 
 delta :: Prim -> [Prim] -> Either Error Value
 delta PIAdd [PInt n1, PInt n2] = Right $ liftInt  $ n1 +  n2
+delta PISub [PInt n1, PInt n2] = Right $ liftInt  $ n1 -  n2
+delta PIMul [PInt n1, PInt n2] = Right $ liftInt  $ n1 *  n2
 delta PIEq  [PInt n1, PInt n2] = Right $ liftBool $ n1 == n2
 delta PILt  [PInt n1, PInt n2] = Right $ liftBool $ n1 <  n2
 delta PILe  [PInt n1, PInt n2] = Right $ liftBool $ n1 <= n2

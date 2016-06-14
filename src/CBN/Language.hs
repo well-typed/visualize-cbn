@@ -57,6 +57,8 @@ data Match = Match Pat Term
 data Prim =
     PInt Integer
   | PIAdd
+  | PISub
+  | PIMul
   | PIEq
   | PILt
   | PILe
