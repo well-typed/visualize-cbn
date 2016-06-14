@@ -97,10 +97,10 @@ instance ToDoc Term where
   toDoc' fc (TCon ces)     = toDoc' fc ces
 
   -- special case for @bind e1 (\x -> e2)@
-  toDoc' fc (TApp (TApp (TPtr (Ptr Nothing (Just "bind"))) e1) (TLam x e2)) =
+  toDoc' fc (TApp (TApp (TPtr bind@(Ptr Nothing (Just "bind"))) e1) (TLam x e2)) =
     parensIfChoice (needsParens fc Ap) $ [
         stack [
-            doc "bind" <+> toDoc' (R Ap) e1 <+> doc "(\\" <> toDoc x <+> doc "->"
+            toDoc bind <+> toDoc' (R Ap) e1 <+> doc "(\\" <> toDoc x <+> doc "->"
           , toDoc' (R Lam) e2 <> doc ")"
           ]
       ]
