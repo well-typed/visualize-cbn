@@ -95,6 +95,17 @@ instance ToDoc Term where
   toDoc' _  (TPtr n)       = toDoc n
   toDoc' fc (TPrim pes )   = toDoc' fc pes
   toDoc' fc (TCon ces)     = toDoc' fc ces
+
+  -- special case for @bind e1 (\x -> e2)@
+  toDoc' fc (TApp (TApp (TPtr (Ptr Nothing (Just "bind"))) e1) (TLam x e2)) =
+    parensIfChoice (needsParens fc Ap) $ [
+        stack [
+            doc "bind" <+> toDoc' (R Ap) e1 <+> doc "(\\" <> toDoc x <+> doc "->"
+          , toDoc' (R Lam) e2 <> doc ")"
+          ]
+      ]
+
+  -- standard rendering
   toDoc' fc (TApp e1 e2) = parensIf (needsParens fc Ap) $
       toDoc' (L Ap) e1 <+> toDoc' (R Ap) e2
   toDoc' fc (TSeq e1 e2) = parensIf (needsParens fc Ap) $
