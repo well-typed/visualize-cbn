@@ -1,0 +1,4 @@
+tags
+dist/
+dist-newstyle/
+.ghc.environment.*
