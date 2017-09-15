@@ -3,13 +3,14 @@
 
 name:                visualize-cbn
 version:             0.1.0.0
--- synopsis:
--- description:
+synopsis:            Visualize CBN reduction
+description:         CBN interpretation and visualization tool.
+                     Exports in text format, coloured text (ANSI) or HTML/JavaScript.
 license:             BSD3
 license-file:        LICENSE
 author:              Edsko de Vries
 maintainer:          edsko@well-typed.com
--- copyright:
+copyright:           Well-Typed LLP
 category:            Development
 build-type:          Simple
 extra-source-files:  ChangeLog.md
@@ -37,15 +38,16 @@ executable visualize-cbn
                        CBN.Util.Doc.Style
                        CBN.Util.Map
                        CBN.Util.Snoc
-  build-depends:       base >=4.8 && <4.9
-                     , ansi-terminal
-                     , blaze-html
-                     , blaze-markup
-                     , containers
-                     , data-default
-                     , mtl
-                     , optparse-applicative
-                     , parsec
+  build-depends:       base                 >= 4.8  && < 4.11
+                     , ansi-terminal        >= 0.6  && < 0.7
+                     , blaze-html           >= 0.8  && < 0.10
+                     , blaze-markup         >= 0.7  && < 0.9
+                     , containers           >= 0.5  && < 0.6
+                     , data-default         >= 0.7  && < 0.8
+                     , mtl                  >= 2.2  && < 2.3
+                     , optparse-applicative >= 0.12 && < 0.15
+                     , parsec               >= 3.1  && < 3.2
+                       -- version shipped with ghc
                      , template-haskell
   hs-source-dirs:      src
   default-language:    Haskell2010
