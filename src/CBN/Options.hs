@@ -24,6 +24,7 @@ parseOptions = Options
     <$> (strOption $ mconcat [
              short 'i'
            , help "Input file"
+           , metavar "INPUT-FILE"
            ])
     <*> (switch $ mconcat [
              long "show-trace"
@@ -58,6 +59,7 @@ parseSummarizeOptions = SummarizeOptions
            , help "Maximum number of steps"
            , showDefault
            , value 1000
+           , metavar "N"
            ])
     <*> (switch $ mconcat [
              long "hide-prelude"
