@@ -36,7 +36,7 @@ data Description =
   deriving (Show)
 
 data Step =
-    -- | Evaluation took a single stpe
+    -- | Evaluation took a single step
     Step Description (Heap Term, Term)
 
     -- | We have reached weak head normal form
