@@ -34,7 +34,7 @@ data TraceCont =
   | TraceStopped
 
     -- | We took one reduction step
-  | TraceStep Description Trace
+  | TraceStep DescriptionWithContext Trace
 
     -- | The garbage collector removed some pointers
   | TraceGC (Set Ptr) Trace
@@ -84,21 +84,21 @@ summarize SummarizeOptions{..} = go 0
       if summarizeHideGC
         then goCont (n + 1) c'
         else TraceGC ps $ go (n + 1) t'
-    goCont n (TraceStep d t) =
+    goCont n (TraceStep dwc@(DescriptionWithContext d _) t) =
       case d of
         _ | n > summarizeMaxNumSteps ->
           TraceStopped
         StepApply _ | summarizeCollapseBeta ->
-          TraceStep d $ goBeta (n + 1) t
+          TraceStep dwc $ goBeta (n + 1) t
         StepBeta | summarizeCollapseBeta ->
-          TraceStep d $ goBeta (n + 1) t
+          TraceStep dwc $ goBeta (n + 1) t
         _otherwise ->
-          TraceStep d $ go     (n + 1) t
+          TraceStep dwc $ go     (n + 1) t
 
     -- | We already saw one beta reduction; skip any subsequent ones
     goBeta :: Int -> Trace -> Trace
     goBeta n t@(Trace _ c) = case c of
-      TraceStep StepBeta t' -> goBeta (n + 1) t'
+      TraceStep (DescriptionWithContext StepBeta _) t' -> goBeta (n + 1) t'
       _otherwise            -> go     (n + 1) t
 
     -- | Cleanup the heap
