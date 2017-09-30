@@ -48,7 +48,7 @@ render name = \tr ->
     mkErr :: String -> String
     mkErr = ("error: " ++)
 
-    mkDesc :: Description -> String
+    mkDesc :: DescriptionWithContext -> String
     mkDesc d = "next step: " ++ pretty d
 
     set :: String -> String -> String
