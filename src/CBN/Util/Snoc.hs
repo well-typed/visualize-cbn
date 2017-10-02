@@ -13,8 +13,4 @@ data Snoc a = Nil | Cons (Snoc a) a
   deriving (Show, Eq, Ord)
 
 fromList :: [a] -> Snoc a
-fromList = go Nil
-  where
-    go :: Snoc a -> [a] -> Snoc a
-    go acc []     = acc
-    go acc (x:xs) = go (Cons acc x) xs
+fromList = foldl Cons Nil
