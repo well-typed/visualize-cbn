@@ -160,6 +160,16 @@ instance ToDoc Description where
   toDoc (StepIf b)      = doc "if"     <+> doc (show b)
   toDoc StepSeq         = doc "seq"
 
+-- | Based on purescript implementation
+mintersperse :: (Monoid m) => m -> [m] -> m
+mintersperse _ []       = mempty
+mintersperse _ [x]      = x
+mintersperse sep (x:xs) = x <> sep <> mintersperse sep xs
+
+instance ToDoc DescriptionWithContext where
+  toDoc (DescriptionWithContext descr []) = toDoc descr
+  toDoc (DescriptionWithContext descr context) = toDoc descr <> doc " in " <> (mintersperse (doc " in ") . map toDoc $ reverse context)
+
 -- | For the heap we need to know which pointers we are about to collect
 heapToDoc :: forall a. ToDoc a => Set Ptr -> Heap a -> Doc Style String
 heapToDoc garbage (Heap _next heap) =
