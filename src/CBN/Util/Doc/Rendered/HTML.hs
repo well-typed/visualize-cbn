@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CBN.Util.Doc.Rendered.HTML () where
 
+import Control.Monad (replicateM_)
 import Data.Char (isSpace)
 import Data.Default
 import Data.Function (on)
@@ -22,7 +23,7 @@ instance ToMarkup (Rendered Style) where
 
       goLine :: [Maybe (Style, Char)] -> Html
       goLine =
-          sequence_ . map (goGroup . aux) . groupBy sameStyle . rTrim
+          mapM_ (goGroup . aux) . groupBy sameStyle . rTrim
         where
           -- After grouping, find each group and its style
           aux :: [Maybe (Style, Char)] -> (Style, String)
@@ -61,7 +62,7 @@ instance ToMarkup (Rendered Style) where
           aux :: String -> Html
           aux []       = error "impossible (groupBy)"
           aux cs@(c:_) = if isSpace c
-                           then sequence_ $ replicate (length cs) nbsp
+                           then replicateM_ (length cs) nbsp
                            else toHtml cs
 
       styleToCss :: Style -> H.AttributeValue

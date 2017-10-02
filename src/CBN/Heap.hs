@@ -98,8 +98,7 @@ mark :: Pointers a => Set Ptr -> Heap a -> Set Ptr
 mark roots heap =
     let (gr, toPtr, toVertex) = toGraph heap
     in Set.fromList $ map toPtr
-                    $ concat
-                    $ map Foldable.toList
+                    $ concatMap Foldable.toList
                     $ Graph.dfs gr (map toVertex (Set.toList roots))
 
 -- | Given a set of reachable pointers, remove all unreachable pointers
