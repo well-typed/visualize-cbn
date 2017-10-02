@@ -54,7 +54,7 @@ instance Free Term where
 -------------------------------------------------------------------------------}
 
 instance Pointers Ptr where
-  pointers ptr = Set.singleton ptr
+  pointers = Set.singleton
 
 instance Pointers a => Pointers [a] where
   pointers = Set.unions . map pointers

@@ -23,7 +23,7 @@ instance ToMarkup (Rendered Style) where
 
       goLine :: [Maybe (Style, Char)] -> Html
       goLine =
-          sequence_ . map (goGroup . aux) . groupBy sameStyle . rTrim
+          mapM_ (goGroup . aux) . groupBy sameStyle . rTrim
         where
           -- After grouping, find each group and its style
           aux :: [Maybe (Style, Char)] -> (Style, String)
