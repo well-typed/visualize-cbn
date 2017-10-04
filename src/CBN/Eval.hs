@@ -8,6 +8,7 @@ module CBN.Eval (
 import CBN.Language
 import CBN.Heap
 import CBN.Subst
+import qualified Data.Map as M
 
 type Error = String
 
@@ -53,10 +54,18 @@ step (_, TLam x e)             = WHNF $ VLam x e
 step (_, TCon ces)             = WHNF $ VCon ces
 step (_, TPrim (PrimApp p [])) = WHNF $ VPrim p
 step (hp, TPtr ptr) =
-    case step (hp, deref (hp, ptr)) of
-      Step d (hp', e') -> Step d (mutate (hp', ptr) e', TPtr ptr)
-      Stuck err        -> Stuck err
-      WHNF val         -> WHNF val
+    case deref (hp, ptr) of
+      Nothing -> let ptrs = M.keys $ heapEntries hp
+                 in
+                   Stuck $ "Invalid reference to symbol "
+                   ++ pprintPtr ptr
+                   ++ ". Valid symbol names are: "
+                   ++ show (map pprintPtr ptrs)
+      Just p  ->
+        case step (hp, p) of
+          Step d (hp', e') -> Step d (mutate (hp', ptr) e', TPtr ptr)
+          Stuck err        -> Stuck err
+          WHNF val         -> WHNF val
 step (hp, TLet x e1 e2) =
     Step StepAlloc $ allocSubst RecBinding [(x,e1)] (hp, e2)
 step (hp, TApp e1 e2) = do
