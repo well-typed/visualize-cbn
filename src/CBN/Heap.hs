@@ -10,6 +10,7 @@ module CBN.Heap (
   , alloc
   , mutate
   , initHeap
+  , pprintPtr
     -- * Garbage collection
   , Pointers(..)
   , markAndSweep
@@ -43,6 +44,11 @@ import qualified Data.Graph    as Graph
 data Ptr = Ptr (Maybe Int) (Maybe String)
   deriving (Show, Eq, Ord, Data)
 
+pprintPtr :: Ptr -> String
+pprintPtr (Ptr _        Nothing)   = ""
+pprintPtr (Ptr Nothing  (Just s))  = "@" ++ s
+pprintPtr (Ptr (Just _) (Just s))  = s
+
 -- | Heap
 --
 -- NOTE: We will use the convention that if a particular term or pointer is
@@ -73,9 +79,8 @@ alloc name (Heap next hp) e =
     ptr :: Ptr
     ptr = Ptr (Just next) name
 
-deref :: (Heap a, Ptr) -> a
-deref (Heap _ hp, ptr) =
-    Map.findWithDefault (error $ "deref: invalid pointer " ++ show ptr) ptr hp
+deref :: (Heap a, Ptr) -> Maybe a
+deref (Heap _ hp, ptr) = Map.lookup ptr hp
 
 mutate :: (Heap a, Ptr) -> a -> Heap a
 mutate (Heap next hp, ptr) term = Heap next (Map.insert ptr term hp)
