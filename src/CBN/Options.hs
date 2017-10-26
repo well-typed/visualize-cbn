@@ -7,12 +7,13 @@ import Options.Applicative
 import CBN.Trace
 
 data Options = Options {
-      optionsInput     :: FilePath
-    , optionsShowTrace :: Bool
-    , optionsGC        :: Bool
-    , optionsSummarize :: SummarizeOptions
-    , optionsJsOutput  :: Maybe FilePath
-    , optionsJsName    :: String
+      optionsInput       :: FilePath
+    , optionsShowTrace   :: Bool
+    , optionsGC          :: Bool
+    , optionsSummarize   :: SummarizeOptions
+    , optionsJsOutput    :: Maybe FilePath
+    , optionsJsName      :: String
+    , optionsGraphOutput :: Maybe FilePath
     }
   deriving (Show)
 
@@ -38,14 +39,19 @@ parseOptions = Options
     <*> (optional . strOption $ mconcat [
              long "javascript"
            , help "Generate JavaScript output"
-           , metavar "FILE"
+           , metavar "JS-FILE"
            ])
     <*> (strOption $ mconcat [
              long "javascript-function"
            , help "Function name prefix in the JavaScript output"
-           , metavar "NAME"
+           , metavar "JS-NAME"
            , showDefault
            , value "cbn"
+           ])
+    <*> (optional . strOption $ mconcat [
+             long "graph"
+           , help "Generate a graph output in dot format"
+           , metavar "GRAPH-FILE"
            ])
 
 parseSummarizeOptions :: Parser SummarizeOptions

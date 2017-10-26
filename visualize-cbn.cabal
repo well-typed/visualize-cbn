@@ -34,6 +34,7 @@ executable visualize-cbn
                        CBN.Trace
                        CBN.Trace.JavaScript
                        CBN.Trace.Textual
+                       CBN.Trace.Graph
                        CBN.Util.Doc
                        CBN.Util.Doc.Rendered
                        CBN.Util.Doc.Rendered.ANSI

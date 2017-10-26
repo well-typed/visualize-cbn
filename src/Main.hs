@@ -7,6 +7,7 @@ import CBN.Parser
 import CBN.Trace
 import CBN.Trace.JavaScript as Trace.JavaScript
 import CBN.Trace.Textual    as Trace.Textual
+import CBN.Trace.Graph      as Trace.Graph
 
 main :: IO ()
 main = do
@@ -17,3 +18,5 @@ main = do
       Trace.Textual.renderIO trace
     forM_ optionsJsOutput $ \file ->
       writeFile file $ Trace.JavaScript.render optionsJsName trace
+    forM_ optionsGraphOutput $ \file ->
+      putStrLn $ Trace.Graph.render trace
