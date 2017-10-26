@@ -34,6 +34,7 @@ executable visualize-cbn
                        CBN.Trace
                        CBN.Trace.JavaScript
                        CBN.Trace.Textual
+                       CBN.Trace.Graph
                        CBN.Util.Doc
                        CBN.Util.Doc.Rendered
                        CBN.Util.Doc.Rendered.ANSI
@@ -52,6 +53,7 @@ executable visualize-cbn
                      , parsec               >= 3.1  && < 3.2
                        -- version shipped with ghc
                      , template-haskell
+                     , text
   hs-source-dirs:      src
   default-language:    Haskell2010
   default-extensions:  DeriveDataTypeable
