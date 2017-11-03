@@ -23,7 +23,7 @@ The syntax is not _quite_ Haskell, but hopefully it should be pretty self-explan
 We can step through the evaluation of this program using
 
 ```
-visualize-cbn -i examples/fac.hs --show-trace --hide-prelude
+visualize-cbn -i examples/take.hs --show-trace --hide-prelude
 ```
 
 This will result in something like
@@ -31,29 +31,93 @@ This will result in something like
 ```
 ** 0
 
-fac 1
+take 1 (enumFromTo 1 10)
 
-(apply fac)
+(apply take)
 
 ** 1
 
-if 1 <= 1
-  then 1
-  else fac (1 - 1) * 1
+(\xs -> if 1 == 0
+          then []
+          else case xs of {
+                 []    -> []
+                 x:xs' -> x : take (1 - 1) xs'
+               }) (enumFromTo 1 10)
 
-(delta: 1 <= 1)
+(beta reduction)
 
 ** 2
 
-if True
-  then 1
-  else fac (1 - 1) * 1
+if 1 == 0
+  then []
+  else case enumFromTo 1 10 of {
+         []    -> []
+         x:xs' -> x : take (1 - 1) xs'
+       }
 
-(if True)
+(delta: 1 == 0)
 
 ** 3
 
-1
+if False
+  then []
+  else case enumFromTo 1 10 of {
+         []    -> []
+         x:xs' -> x : take (1 - 1) xs'
+       }
+
+(if False)
+
+** 4
+
+case enumFromTo 1 10 of {
+  []    -> []
+  x:xs' -> x : take (1 - 1) xs'
+}
+
+(apply enumFromTo)
+
+** 5
+
+case (\m -> if 1 <= m
+              then 1 : enumFromTo (1 + 1) m
+              else []) 10 of {
+  []    -> []
+  x:xs' -> x : take (1 - 1) xs'
+}
+
+(beta reduction)
+
+** 6
+
+case (if 1 <= 10 then 1 : enumFromTo (1 + 1) 10 else []) of {
+  []    -> []
+  x:xs' -> x : take (1 - 1) xs'
+}
+
+(delta: 1 <= 10)
+
+** 7
+
+case (if True then 1 : enumFromTo (1 + 1) 10 else []) of {
+  []    -> []
+  x:xs' -> x : take (1 - 1) xs'
+}
+
+(if True)
+
+** 8
+
+case (1 : enumFromTo (1 + 1) 10) of {
+  []    -> []
+  x:xs' -> x : take (1 - 1) xs'
+}
+
+(match Cons)
+
+** 9
+
+1 : take (1 - 1) (enumFromTo (1 + 1) 10)
 
 (whnf)
 ```
