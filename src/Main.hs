@@ -19,4 +19,4 @@ main = do
     forM_ optionsJsOutput $ \file ->
       writeFile file $ Trace.JavaScript.render optionsJsName trace
     forM_ optionsGraphOutput $ \file ->
-      putStrLn $ Trace.Graph.render trace
+      writeFile file $ Trace.Graph.render trace
