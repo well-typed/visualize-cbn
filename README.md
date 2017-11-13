@@ -89,4 +89,4 @@ The resulting `.js` file can be embedded in a HTML page (such as a blog post); a
 </html>
 ```
 
-(This `.html` file was not written to illustrate HTML best practices :-) ) See the Well-Typed blog post about the tool for an example output. 
+(This `.html` file was not written to illustrate HTML best practices :-) ) See the [Well-Typed blog post about the tool](http://www.well-typed.com/blog/2017/09/visualize-cbn/) for an example output. 
