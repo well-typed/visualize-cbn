@@ -23,32 +23,7 @@ instance ToMarkup (Rendered Style) where
 
       goLine :: [Maybe (Style, Char)] -> Html
       goLine =
-          mapM_ (goGroup . aux) . groupBy sameStyle . rTrim
-        where
-          -- After grouping, find each group and its style
-          aux :: [Maybe (Style, Char)] -> (Style, String)
-          aux []                 = (def, "")
-          aux (Nothing     : cs) = let (st, str) = aux cs in (st, ' ':str)
-          aux (Just (st,c) : cs) = (st, c:map toChar cs)
-
-          toChar :: Maybe (Style, Char) -> Char
-          toChar Nothing      = ' '
-          toChar (Just (_,c)) = c
-
-      -- Are two characters the same style?
-      --
-      -- We regard padding as having a different style from everything else;
-      -- although it doesn't really matter what style we use for padding, if
-      -- we don't do this then something like
-      --
-      -- > (style1, "foo") `padding` (style2, "bar")
-      --
-      -- will not be rendered correctly, since @style1@ would be considered
-      -- equal to @padding@ which would in turn be considered equal to @style2@.
-      sameStyle :: Maybe (Style, Char) -> Maybe (Style, Char) -> Bool
-      sameStyle Nothing        _               = False
-      sameStyle _              Nothing         = False
-      sameStyle (Just (st, _)) (Just (st', _)) = st == st'
+        mapM_ goGroup . groupByStyle . rTrim
 
       goGroup :: (Style, String) -> Html
       goGroup (st, str)

@@ -2,58 +2,60 @@
 
 module CBN.Trace.Graph (render) where
 
-import Data.Set (Set)
-import qualified Data.Set as Set
-import CBN.Heap
-import           CBN.Trace
+import           CBN.Eval
+import           CBN.Heap
 import           CBN.Pretty
-import CBN.Eval
-import qualified Data.Sequence as Seq
-import qualified Data.Text     as T
-import qualified CBN.Util.Doc               as Doc
+import           CBN.Trace
+import qualified CBN.Util.Doc          as Doc
+import qualified CBN.Util.Doc.Rendered as Rendered
 import           CBN.Util.Doc.Style
-import qualified CBN.Util.Doc.Rendered      as Rendered
-import Data.Monoid ((<>))
-import Debug.Trace (trace)
-
-data Node = Node
+import           Data.Monoid           ((<>))
+import           Data.Set              (Set)
+import qualified Data.Set              as Set
+import qualified Data.Text             as T
 
 render :: Trace -> String
-render tr@(Trace (hp, t) cont) =
+render tr =
   "digraph G {\n"
-  -- ++ "rankdir=LR;\n"
-  ++ "node [ shape=\"record\" ];\n"
+  ++ "node [ fontname=monospace, shape=plaintext ];\n"
   ++ go 0 tr
   ++ "}"
   where
     go :: Int -> Trace -> String
-    go n (Trace (hp, t) cont) =
+    go index (Trace (hp, t) cont) =
       case cont of
         TraceWHNF _     -> mkFrame Set.empty "whnf"
         TraceStuck err  -> mkFrame Set.empty (mkErr err)
         TraceStopped    -> mkFrame Set.empty "stopped"
-        TraceStep d tr' -> mkFrame Set.empty (mkDesc d) ++ go (n + 1) tr'
-        TraceGC ps tr'  -> mkFrame ps "gc" ++ go (n + 1) tr'
+        TraceStep d tr' -> mkFrame Set.empty (mkDesc d) ++ go (index + 1) tr'
+        TraceGC ps tr'  -> mkFrame ps "gc" ++ go (index + 1) tr'
       where
         mkFrame :: Set Ptr -> T.Text -> String
         mkFrame garbage status =
           T.unpack $
-            setLabel n ("{ " <> escapeChars (pretty t) <> " | " <> escapeChars (pretty (heapToDoc garbage hp)) <> " | " <> status <> " }")
+            setLabel index ("<<TABLE ALIGN=\"LEFT\">" <> rows <> "</TABLE>>")
             <> "\n"
-            <> mkConnection n
+            <> mkConnection index
+          where
+            rows :: T.Text
+            rows = mkRow (pretty t)
+                <> mkRow (pretty (heapToDoc garbage hp))
+                <> mkRow status 
 
-        escapeChars :: T.Text -> T.Text
+        mkRow :: T.Text -> T.Text
+        mkRow content = "<TR><TD BALIGN=\"LEFT\" ALIGN=\"LEFT\">" <> content <> "</TD></TR>"
+
+        escapeChars :: String -> String
         escapeChars =
-          T.replace ">" "\\>"
-          . T.replace "{" "\\{"
-          . T.replace "}" "\\}"
-          . T.replace " " "\\ "
-          . T.replace "\n" "\\l"
-          . T.replace "\\" "\\\\"
-          . (\a -> trace (T.unpack a) a)
+          T.unpack
+          . T.replace "\n" "<BR />"
+          . T.replace ">" "&gt;"
+          . T.replace "<" "&lt;"
+          . T.replace " " "&nbsp;"
+          . T.pack
 
         setLabel :: Int -> T.Text -> T.Text
-        setLabel n label = mkNode n <> "[label=\"" <> label <> "\"];"
+        setLabel n label = mkNode n <> "[label=" <> label <> "];"
 
         mkConnection :: Int -> T.Text
         mkConnection n
@@ -73,16 +75,17 @@ render tr@(Trace (hp, t) cont) =
         pretty = T.pack . goRendered . Rendered.rendered . Doc.render (\r -> Rendered.width r <= 80) . toDoc
 
         goRendered :: [[Maybe (Style, Char)]] -> String
-        goRendered [] = ""
-        goRendered (row:xs) = goRow row ++ "\n" ++ goRendered xs
+        goRendered []       = ""
+        goRendered (row:xs) = goRow row ++ "<BR />" ++ goRendered xs
 
         goRow :: [Maybe (Style, Char)] -> String
-        goRow [] = ""
-        goRow (x:xs) = goChar x ++ goRow xs
+        goRow = mconcat . map toDotHtml . groupByStyle
 
-        goChar :: Maybe (Style, Char) -> String
-        goChar Nothing = " "
-        goChar (Just (_st, c)) = [c]
-  -- s0 -> s1;
-  -- s1 [ label="{ case map (\\x -\> x + x) (repeat (10 + 1)) of \{\l\ \ x:xs' -\> x\l\}\l | (apply map) }"
-  --    ];
+        toDotHtml :: (Style, String) -> String
+        toDotHtml (Style Nothing _ True _, str) = "<B>" <> escapeChars str <> "</B>"
+        toDotHtml (Style Nothing _ _ True, str) = "<I>" <> escapeChars str <> "</I>"
+        toDotHtml (Style (Just fg) _ _ _, str) =
+          let color = case fg of Blue -> "blue"; Red -> "red"
+          in
+            "<FONT COLOR=\"" <> color <> "\">" <> escapeChars str <> "</FONT>"
+        toDotHtml (Style Nothing _ False False, str) = escapeChars str
