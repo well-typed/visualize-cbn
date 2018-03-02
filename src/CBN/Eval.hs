@@ -66,6 +66,13 @@ step (hp, TPtr ptr) =
           Step d (hp', e') -> Step d (mutate (hp', ptr) e', TPtr ptr)
           Stuck err        -> Stuck err
           WHNF val         -> WHNF val
+step (hp, TLet x e1 (TSeq (TVar x') e2)) | x == x' =
+    -- special case for let x = e in seq x ..
+    -- rather than allocate we reduce inside the let
+    case step (hp, e1) of
+      Step d (hp', e1') -> Step d (hp', TLet x e1' (TSeq (TVar x) e2))
+      Stuck err         -> Stuck err
+      WHNF _            -> Step StepSeq (hp, TLet x e1 e2)
 step (hp, TLet x e1 e2) =
     Step StepAlloc $ allocSubst RecBinding [(x,e1)] (hp, e2)
 step (hp, TApp e1 e2) = do
