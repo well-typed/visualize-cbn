@@ -40,7 +40,7 @@ render tr =
             rows :: T.Text
             rows = mkRow (pretty t)
                 <> mkRow (pretty (heapToDoc garbage hp))
-                <> mkRow status 
+                <> mkRow status
 
         mkRow :: T.Text -> T.Text
         mkRow content = "<TR><TD BALIGN=\"LEFT\" ALIGN=\"LEFT\">" <> content <> "</TD></TR>"
@@ -68,8 +68,8 @@ render tr =
         mkErr :: String -> T.Text
         mkErr = ("error: " <>) . T.pack
 
-        mkDesc :: Description -> T.Text
-        mkDesc d = "next step: " <> pretty d
+        mkDesc :: DescriptionWithContext -> T.Text
+        mkDesc (DescriptionWithContext d _) = "next step: " <> pretty d
 
         pretty :: ToDoc a => a -> T.Text
         pretty = T.pack . goRendered . Rendered.rendered . Doc.render (\r -> Rendered.width r <= 80) . toDoc

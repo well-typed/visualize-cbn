@@ -82,7 +82,7 @@ step (hp, TLet x e1 (TSeq (TVar x') e2)) | x == x' =
     case step (hp, e1) of
       Step d (hp', e1') -> Step d (hp', TLet x e1' (TSeq (TVar x) e2))
       Stuck err         -> Stuck err
-      WHNF _            -> Step StepSeq (hp, TLet x e1 e2)
+      WHNF _            -> no_context StepSeq (hp, TLet x e1 e2)
 step (hp, TLet x e1 e2) =
     no_context StepAlloc $ allocSubst RecBinding [(x,e1)] (hp, e2)
 step (hp, TApp e1 e2) = do
