@@ -37,7 +37,9 @@ data Description =
   | StepSeq
   deriving (Show)
 
-data DescriptionWithContext = DescriptionWithContext Description [Ptr] deriving (Show)
+data DescriptionWithContext =
+    DescriptionWithContext Description [Ptr]
+  deriving (Show)
 
 data Step =
     -- | Evaluation took a single step
@@ -50,12 +52,13 @@ data Step =
   | Stuck Error
   deriving (Show)
 
-no_context :: Description -> (Heap Term, Term) -> Step
-no_context descr = Step (DescriptionWithContext descr [])
+emptyContext :: Description -> (Heap Term, Term) -> Step
+emptyContext descr =
+    Step (DescriptionWithContext descr [])
 
-add_context :: Ptr -> DescriptionWithContext -> (Heap Term, Term) -> Step
-add_context ptr (DescriptionWithContext descr context) = Step (DescriptionWithContext descr (ptr:context))
-
+pushContext :: Ptr -> DescriptionWithContext -> (Heap Term, Term) -> Step
+pushContext ptr (DescriptionWithContext descr context) =
+    Step (DescriptionWithContext descr (ptr:context))
 
 -- | Single execution step (small step semantics)
 step :: (Heap Term, Term) -> Step
@@ -73,7 +76,7 @@ step (hp, TPtr ptr) =
                    ++ show (map pprintPtr ptrs)
       Just p  ->
         case step (hp, p) of
-          Step d (hp', e') -> add_context ptr d (mutate (hp', ptr) e', TPtr ptr)
+          Step d (hp', e') -> pushContext ptr d (mutate (hp', ptr) e', TPtr ptr)
           Stuck err        -> Stuck err
           WHNF val         -> WHNF val
 step (hp, TLet x e1 (TSeq (TVar x') e2)) | x == x' =
@@ -82,9 +85,9 @@ step (hp, TLet x e1 (TSeq (TVar x') e2)) | x == x' =
     case step (hp, e1) of
       Step d (hp', e1') -> Step d (hp', TLet x e1' (TSeq (TVar x) e2))
       Stuck err         -> Stuck err
-      WHNF _            -> no_context StepSeq (hp, TLet x e1 e2)
+      WHNF _            -> emptyContext StepSeq (hp, TLet x e1 e2)
 step (hp, TLet x e1 e2) =
-    no_context StepAlloc $ allocSubst RecBinding [(x,e1)] (hp, e2)
+    emptyContext StepAlloc $ allocSubst RecBinding [(x,e1)] (hp, e2)
 step (hp, TApp e1 e2) = do
     let descr = case e1 of
                   TPtr ptr   -> StepApply ptr
@@ -92,7 +95,7 @@ step (hp, TApp e1 e2) = do
     case step (hp, e1) of
       Step d (hp', e1') -> Step d (hp', TApp e1' e2)
       Stuck err         -> Stuck err
-      WHNF (VLam x e1') -> no_context descr $ allocSubst NonRecBinding [(x,e2)] (hp, e1')
+      WHNF (VLam x e1') -> emptyContext descr $ allocSubst NonRecBinding [(x,e2)] (hp, e1')
       WHNF _            -> Stuck "expected lambda"
 step (hp, TCase e ms) =
     case step (hp, e) of
@@ -105,7 +108,7 @@ step (hp, TCase e ms) =
           Nothing -> Stuck "Non-exhaustive pattern match"
           Just (xs, e') ->
             if length xs == length es
-              then no_context (StepMatch c) $ allocSubst NonRecBinding (zip xs es) (hp, e')
+              then emptyContext (StepMatch c) $ allocSubst NonRecBinding (zip xs es) (hp, e')
               else Stuck $ "Invalid pattern match (cannot match " ++ show (xs, es) ++ ")"
 step (hp, TPrim (PrimApp p es)) =
     case stepPrimArgs hp es of
@@ -113,20 +116,20 @@ step (hp, TPrim (PrimApp p es)) =
       PrimWHNF vs        -> let descr = StepDelta (PrimApp p (map (valueToTerm . VPrim) vs))
                             in case delta p vs of
                               Left err -> Stuck err
-                              Right e' -> no_context descr (hp, valueToTerm e')
+                              Right e' -> emptyContext descr (hp, valueToTerm e')
       PrimStuck err      -> Stuck err
 step (hp, TIf c t f) =
     case step (hp, c) of
       Step d (hp', c') -> Step d (hp', TIf c' t f)
       Stuck err        -> Stuck err
-      WHNF val | val == liftBool True  -> no_context (StepIf True)  (hp, t)
-               | val == liftBool False -> no_context (StepIf False) (hp, f)
+      WHNF val | val == liftBool True  -> emptyContext (StepIf True)  (hp, t)
+               | val == liftBool False -> emptyContext (StepIf False) (hp, f)
                | otherwise             -> Stuck "expected bool"
 step (hp, TSeq e1 e2) =
     case step (hp, e1) of
       Step d (hp', e1') -> Step d (hp', TSeq e1' e2)
       Stuck err         -> Stuck err
-      WHNF _            -> no_context StepSeq (hp, e2)
+      WHNF _            -> emptyContext StepSeq (hp, e2)
 
 -- | The result of stepping the arguments to an n-ary primitive function
 data StepPrimArgs =

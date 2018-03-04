@@ -168,7 +168,12 @@ mintersperse sep (x:xs) = x <> sep <> mintersperse sep xs
 
 instance ToDoc DescriptionWithContext where
   toDoc (DescriptionWithContext descr []) = toDoc descr
-  toDoc (DescriptionWithContext descr context) = toDoc descr <> doc " in " <> (mintersperse (doc " in ") . map toDoc $ reverse context)
+  toDoc (DescriptionWithContext descr context) = mconcat [
+        toDoc descr
+      , doc " in ["
+      , mintersperse (doc ", ") $ map toDoc context
+      , doc "]"
+      ]
 
 -- | For the heap we need to know which pointers we are about to collect
 heapToDoc :: forall a. ToDoc a => Set Ptr -> Heap a -> Doc Style String
