@@ -10,7 +10,7 @@ display = (\c -> case c of {
       Counter ti to d -> d
     })
 
-fix = (\f -> let a = @fix f in f a)
+fix = (\f -> f (@fix f))
 
 mkCounter = (\self -> \n ->
     Counter (let n' = add n 1 in seq n' (self n'))
