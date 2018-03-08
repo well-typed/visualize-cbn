@@ -10,7 +10,7 @@ maintainer:          edsko@well-typed.com
 copyright:           Well-Typed LLP
 category:            Development
 build-type:          Simple
-extra-source-files:  ChangeLog.md
+extra-source-files:  ChangeLog.md README.md CONTRIBUTORS
 cabal-version:       >=1.10
 
 source-repository head

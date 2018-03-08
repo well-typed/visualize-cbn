@@ -1,5 +1,5 @@
 
-fix = (\f -> let a = @fix f in f a)
+fix = (\f -> f (@fix f))
 
 fac = (\r -> \n ->
     if eq n 1
