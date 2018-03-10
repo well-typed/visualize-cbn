@@ -14,3 +14,4 @@
   this avoids moving `e1` to the heap  (provided that there aren't multiple
   references to `x` from `e2`), clarifying the evaluation.
 * Added graph output (contributed by Yiğit Özkavcı).
+* Improved heap descriptions (contributed by Tim Rakowski). 
