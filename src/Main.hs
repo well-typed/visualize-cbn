@@ -1,10 +1,11 @@
-module Main (main) where
+  module Main (main) where
 
 import Control.Monad
 
 import CBN.Options
 import CBN.Parser
 import CBN.Trace
+import CBN.Trace.HeapGraph  as Trace.HeapGraph
 import CBN.Trace.JavaScript as Trace.JavaScript
 import CBN.Trace.Textual    as Trace.Textual
 import CBN.Trace.Graph      as Trace.Graph
@@ -17,6 +18,7 @@ main = do
     when optionsShowTrace $      
       Trace.Textual.renderIO trace
     forM_ optionsJsOutput $ \file ->
-      writeFile file $ Trace.JavaScript.render optionsJsName trace
+      writeFile file $ Trace.JavaScript.render optionsJsName optionsGraphOutput trace
     forM_ optionsGraphOutput $ \file ->
       writeFile file $ Trace.Graph.render trace
+    forM_ optionsGraphOutput $ toGraphFiles trace
