@@ -19,7 +19,8 @@ source-repository head
 
 executable visualize-cbn
   main-is:             Main.hs
-  other-modules:       CBN.Eval
+  other-modules:       CBN.Closure
+                       CBN.Eval
                        CBN.Free
                        CBN.Heap
                        CBN.Language
@@ -50,6 +51,7 @@ executable visualize-cbn
                      , parsec               >= 3.1  && < 3.2
                        -- version shipped with ghc
                      , template-haskell
+                     , mtl
                      , text
   hs-source-dirs:      src
   default-language:    Haskell2010
