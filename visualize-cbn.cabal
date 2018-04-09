@@ -30,6 +30,7 @@ executable visualize-cbn
                        CBN.Pretty.Precedence
                        CBN.Subst
                        CBN.Trace
+                       CBN.Trace.HeapGraph
                        CBN.Trace.JavaScript
                        CBN.Trace.Textual
                        CBN.Trace.Graph

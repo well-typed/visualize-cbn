@@ -6,6 +6,7 @@ import Data.Set (Set)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
+import CBN.Closure
 import CBN.Eval
 import CBN.Heap
 import CBN.Language
@@ -150,6 +151,15 @@ instance ToDoc Term where
       c' = toDoc' Top    c
       t' = toDoc' (R If) t
       f' = toDoc' (R If) f
+
+instance ToDoc Closure where
+  toDoc cl = case cl of
+    ErrorClosure str -> doc "Error :" <+> doc str
+    FunClosure term _ -> doc "Funtion :" <+> toDoc term
+    ConClosure con _ -> doc "Constructor :" <+> toDoc con
+    IndirectionClosure _ -> doc "Indirection " -- <+> toDoc ptr
+    ThunkClosure term _ -> doc "Thunk :" <+> toDoc term
+    PrimClosure prim _ -> doc "Primary :" <+> toDoc prim
 
 instance ToDoc Description where
   toDoc StepAlloc       = doc "allocate"
