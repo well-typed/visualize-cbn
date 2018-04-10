@@ -155,7 +155,7 @@ instance ToDoc Term where
 instance ToDoc Closure where
   toDoc cl = case cl of
     ErrorClosure str -> doc "Error :" <+> doc str
-    FunClosure term _ -> doc "Funtion :" <+> toDoc term
+    FunClosure term _ -> doc "Function :" <+> toDoc term
     ConClosure con _ -> doc "Constructor :" <+> toDoc con
     IndirectionClosure _ -> doc "Indirection " -- <+> toDoc ptr
     ThunkClosure term _ -> doc "Thunk :" <+> toDoc term
