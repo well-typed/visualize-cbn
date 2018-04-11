@@ -14,6 +14,7 @@ data Options = Options {
     , optionsJsOutput    :: Maybe FilePath
     , optionsJsName      :: String
     , optionsGraphOutput :: Maybe FilePath
+    , optionsGraphTermsOutput :: Maybe FilePath
     }
   deriving (Show)
 
@@ -52,6 +53,11 @@ parseOptions = Options
              long "graph"
            , help "Generate a graph output in dot format"
            , metavar "GRAPH-FILE"
+           ])
+    <*> (optional . strOption $ mconcat [
+             long "heap-graph"
+           , help "Generate one graph representation file for each step"
+           , metavar "PATH/FILES-PREFIX"
            ])
 
 parseSummarizeOptions :: Parser SummarizeOptions

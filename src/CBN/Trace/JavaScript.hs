@@ -13,10 +13,11 @@ import CBN.Util.Doc.Rendered.HTML ()
 import qualified CBN.Util.Doc          as Doc
 import qualified CBN.Util.Doc.Rendered as Rendered
 
-render :: String -> Trace -> String
-render name = \tr ->
+render :: String -> Maybe FilePath -> Trace -> String
+render name graph = \tr ->
        "function " ++ name ++ "(frame) {\n"
     ++ innerHTML "step" ++ " = frame;\n"
+    ++ mkGraph
     ++ go 0 tr
     ++ "}\n"
     ++ "var " ++ name ++ "_frame = 0;\n"
@@ -28,6 +29,13 @@ render name = \tr ->
     ++ "}\n"
     ++ name ++ "(" ++ name ++ "_frame);\n"
   where
+    mkGraph :: String
+    mkGraph = case graph of
+      Nothing -> ""
+      Just g  ->
+        innerHTML "graph" ++ " = \'<img src=\\'"
+        ++ g ++ "' + frame.toString() + '.png\\'>';\n"
+
     go :: Int -> Trace -> String
     go n (Trace (hp, e) c) =
         case c of
