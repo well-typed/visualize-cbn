@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- | Rendered documents
 --
 -- Intended for qualified import
@@ -17,6 +18,7 @@ import Data.Bifunctor
 import Data.Default
 import Data.List (transpose)
 import Data.Maybe (isNothing)
+import Data.Semigroup as Sem
 
 -- | A table in rows-of-columns format
 --
@@ -73,10 +75,15 @@ data Rendered st = Rendered {
 instance Functor Rendered where
   fmap f r = r { rendered = map (map (fmap (first f))) (rendered r) }
 
+instance Sem.Semigroup (Rendered st) where
+    (<>) = nestle
+
 -- | Like the instance for 'Doc', this corresponds to horizontal composition
 instance Monoid (Rendered st) where
   mempty  = empty
-  mappend = nestle
+#if !(MIN_VERSION_base(4,11,0))
+  mappend = (<>)
+#endif
   mconcat = nestles
 
 -- | Empty rendered documents
