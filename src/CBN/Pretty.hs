@@ -1,6 +1,9 @@
+{-# LANGUAGE CPP #-}
 module CBN.Pretty (ToDoc, toDoc, heapToDoc) where
 
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Monoid
+#endif
 import Data.List (intersperse)
 import Data.Set (Set)
 import qualified Data.Map as Map
@@ -10,7 +13,7 @@ import CBN.Closure
 import CBN.Eval
 import CBN.Heap
 import CBN.Language
-import CBN.Pretty.Precedence
+import CBN.Pretty.Precedence as P
 import CBN.Util.Doc
 import CBN.Util.Doc.Style
 
@@ -55,16 +58,16 @@ instance ToDoc PrimApp where
     toDoc' (L Lt) a <+> doc "<" <+> toDoc' (R Lt) b
   toDoc' fc (PrimApp PIEq [a, b]) = parensIf (needsParens fc Eq) $
     toDoc' (L Eq) a <+> doc "==" <+> toDoc' (R Eq) b
-  toDoc' fc (PrimApp p es) = parensIf (needsParens fc Ap && not (null es)) $
-    hsep (toDoc p : map (toDoc' (R Ap)) es)
+  toDoc' fc (PrimApp p es) = parensIf (needsParens fc P.Ap && not (null es)) $
+    hsep (toDoc p : map (toDoc' (R P.Ap)) es)
 
 instance ToDoc ConApp where
   toDoc' fc (ConApp (Con "Cons") [x, xs]) = parensIf (needsParens fc Cons) $
     toDoc' (L Cons) x <+> doc ":" <+> toDoc' (R Cons) xs
   toDoc' _fc (ConApp (Con "Pair") [x, xs]) = parensIf True $
     toDoc' Top x <> doc "," <+> toDoc' Top xs
-  toDoc' fc (ConApp c es) = parensIf (needsParens fc Ap && not (null es)) $
-    hsep (toDoc c : map (toDoc' (R Ap)) es)
+  toDoc' fc (ConApp c es) = parensIf (needsParens fc P.Ap && not (null es)) $
+    hsep (toDoc c : map (toDoc' (R P.Ap)) es)
 
 instance ToDoc Pat where
   toDoc (Pat (Con "Cons") [x, xs]) =
@@ -99,18 +102,18 @@ instance ToDoc Term where
 
   -- special case for @bind e1 (\x -> e2)@
   toDoc' fc (TApp (TApp (TPtr bind@(Ptr Nothing (Just "bind"))) e1) (TLam x e2)) =
-    parensIfChoice (needsParens fc Ap) $ [
+    parensIfChoice (needsParens fc P.Ap) $ [
         stack [
-            toDoc bind <+> toDoc' (R Ap) e1 <+> doc "(\\" <> toDoc x <+> doc "->"
+            toDoc bind <+> toDoc' (R P.Ap) e1 <+> doc "(\\" <> toDoc x <+> doc "->"
           , toDoc' (R Lam) e2 <> doc ")"
           ]
       ]
 
   -- standard rendering
-  toDoc' fc (TApp e1 e2) = parensIf (needsParens fc Ap) $
-      toDoc' (L Ap) e1 <+> toDoc' (R Ap) e2
-  toDoc' fc (TSeq e1 e2) = parensIf (needsParens fc Ap) $
-      kw "seq" <+> toDoc' (R Ap) e1 <+> toDoc' (R Ap) e2
+  toDoc' fc (TApp e1 e2) = parensIf (needsParens fc P.Ap) $
+      toDoc' (L P.Ap) e1 <+> toDoc' (R P.Ap) e2
+  toDoc' fc (TSeq e1 e2) = parensIf (needsParens fc P.Ap) $
+      kw "seq" <+> toDoc' (R P.Ap) e1 <+> toDoc' (R P.Ap) e2
   toDoc' fc (TLam x e) = parensIf (needsParens fc Lam) $
       doc "\\" <> hsep (map toDoc (x:xs)) <+> doc "->" <+> toDoc' (R Lam) e'
     where

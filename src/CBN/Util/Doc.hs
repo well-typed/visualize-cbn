@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module CBN.Util.Doc (
     Table
   , Doc -- opaque
@@ -14,6 +15,7 @@ import Data.Default
 import Data.Foldable (asum)
 import Data.List (find)
 import Data.Maybe (fromMaybe)
+import Data.Semigroup as Sem
 
 import CBN.Util.Doc.Rendered (Table, Rendered)
 import qualified CBN.Util.Doc.Rendered as Rendered
@@ -44,10 +46,15 @@ data Doc st a =
     -- | Apply style
   | Style (st -> st) (Doc st a)
 
+instance Sem.Semigroup (Doc st a) where
+    (<>) = Append
+
 -- | The standard monoidal corresponds to horizontal composition
 instance Monoid a => Monoid (Doc st a) where
   mempty  = Doc mempty
-  mappend = Append
+#if !(MIN_VERSION_base(4,11,0))
+  mappend = (<>)
+#endif
 
 -- | Primitive document
 doc :: a -> Doc st a
