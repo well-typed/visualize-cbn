@@ -1,5 +1,9 @@
 # Revision history for visualize-cbn
 
+## 0.1.0.2  -- 2019-09-10
+
+* Newer GHC compatibility
+
 ## 0.1.0.1  -- 2018-03-04
 
 * Start maintaining ChangeLog file.

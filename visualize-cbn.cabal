@@ -1,5 +1,5 @@
 name:                visualize-cbn
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            Visualize CBN reduction
 description:         CBN interpretation and visualization tool.
                      Exports in text format, coloured text (ANSI) or HTML/JavaScript.
