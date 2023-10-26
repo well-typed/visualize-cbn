@@ -77,6 +77,10 @@ parseSummarizeOptions = SummarizeOptions
              long "hide-prelude"
            , help "Hide the prelude from the help"
            ])
+    <*> (many $ option str $ mconcat [
+             long "hide-term"
+           , help "Hide specific term from the prelude (can be used multiple times)"
+           ])
     <*> (switch $ mconcat [
              long "hide-gc"
            , help "Hide GC steps"

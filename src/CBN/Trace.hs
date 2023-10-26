@@ -66,6 +66,7 @@ data SummarizeOptions = SummarizeOptions {
       summarizeCollapseBeta :: Bool
     , summarizeMaxNumSteps  :: Int
     , summarizeHidePrelude  :: Bool
+    , summarizeHideTerms    :: [String]
     , summarizeHideGC       :: Bool
     }
   deriving (Show)
@@ -103,12 +104,12 @@ summarize SummarizeOptions{..} = go 0
 
     -- | Cleanup the heap
     goHeap :: Heap Term -> Heap Term
-    goHeap (Heap next heap) = Heap next $
-      if not summarizeHidePrelude
-        then heap
-        else Map.filterWithKey (\ptr -> not . isPrelude ptr) heap
-
-    -- | Does this entry in the heap come from the prelude?
-    isPrelude :: Ptr -> Term -> Bool
-    isPrelude (Ptr Nothing (Just _)) _ = True
-    isPrelude _ _ = False
+    goHeap (Heap next heap) =
+        Heap next $ Map.filterWithKey shouldShow heap
+      where
+        shouldShow :: Ptr -> Term -> Bool
+        shouldShow (Ptr Nothing (Just name)) _ = and [
+              not summarizeHidePrelude
+            , not (name `elem` summarizeHideTerms)
+            ]
+        shouldShow (Ptr _ _) _ = True

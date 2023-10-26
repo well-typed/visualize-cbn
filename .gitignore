@@ -6,3 +6,4 @@ dist-newstyle/
 .cabal-sandbox
 .stack-work
 .cabal.sandbox.config
+.envrc
