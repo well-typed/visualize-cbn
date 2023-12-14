@@ -1,11 +1,9 @@
 {-# LANGUAGE CPP #-}
 module CBN.Pretty (ToDoc, toDoc, heapToDoc) where
 
-#if !(MIN_VERSION_base(4,11,0))
-import Data.Monoid
-#endif
 import Data.List (intersperse)
 import Data.Set (Set)
+
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -38,9 +36,12 @@ instance ToDoc Con where
 
 instance ToDoc Prim where
   toDoc (PInt n) = doc (show n)
+  toDoc PISucc   = doc "succ"
   toDoc PIAdd    = doc "add"
   toDoc PISub    = doc "sub"
   toDoc PIMul    = doc "mul"
+  toDoc PIMin    = doc "min"
+  toDoc PIMax    = doc "max"
   toDoc PIEq     = doc "eq"
   toDoc PILt     = doc "lt"
   toDoc PILe     = doc "le"
@@ -73,7 +74,7 @@ instance ToDoc Pat where
   toDoc (Pat (Con "Cons") [x, xs]) =
     toDoc x <> doc ":" <> toDoc xs
   toDoc (Pat (Con "Pair") [x, xs]) = parensIf True $
-    toDoc x <> doc "," <> toDoc xs
+    toDoc x <> doc "," <+> toDoc xs
   toDoc (Pat c xs) =
     hsep (toDoc c : map toDoc xs)
 
@@ -85,6 +86,10 @@ instance ToDoc Match where
 -- Used when using a vertical layout for a case statement
 matchRow :: FixityContext -> Match -> [Doc Style String]
 matchRow fc (Match p rhs) = [toDoc p, doc " -> ", toDoc' fc rhs]
+
+-- | Table-row for a multiple-binder let statement
+letRow :: (Var, Term) -> [Doc Style String]
+letRow (x, t) = [toDoc x, doc " = ", toDoc t]
 
 -- | We make elements from the prelude blue
 instance ToDoc Ptr where
@@ -118,7 +123,7 @@ instance ToDoc Term where
       doc "\\" <> hsep (map toDoc (x:xs)) <+> doc "->" <+> toDoc' (R Lam) e'
     where
       (xs, e') = collectArgs e
-  toDoc' fc (TLet x e1 e2) = parensIfChoice (needsParens fc Let) [
+  toDoc' fc (TLet [(x, e1)] e2) = parensIfChoice (needsParens fc Let) [
         stack [
             kw "let" <+> x' <+> doc "=" <+> e1' <+> kw "in"
           , e2'
@@ -129,7 +134,13 @@ instance ToDoc Term where
       x'  = toDoc x
       e1' = toDoc' Top     e1
       e2' = toDoc' (R Let) e2
-  toDoc' fc (TCase e ms) = parensIfChoice (needsParens fc Case) [
+  toDoc' fc (TLet bound e) = parensIf (needsParens fc Let) $
+      stack [
+        kw "let" <+> doc "{"
+      , indent $ table $ map letRow bound
+      , doc "}" <+> kw "in" <+> toDoc' (R Let) e
+      ]
+  toDoc' fc (TCase e (Matches ms)) = parensIfChoice (needsParens fc Case) [
         stack [
             kw "case" <+> e' <+> kw "of" <+> doc "{"
           , indent $ table $ map (matchRow (R Case)) ms
@@ -140,6 +151,8 @@ instance ToDoc Term where
     where
       e'  = toDoc' (L Case) e
       ms' = map (toDoc' (R Case)) ms
+  toDoc' fc (TCase e (Selector s)) = parensIf (needsParens fc P.Ap) $
+      toDoc' (L P.Ap) s <+> toDoc' (R P.Ap) e
   toDoc' fc (TIf c t f) = parensIfChoice (needsParens fc If) [
         stack [
             kw "if" <+> c'
@@ -155,6 +168,10 @@ instance ToDoc Term where
       t' = toDoc' (R If) t
       f' = toDoc' (R If) f
 
+instance ToDoc Selector where
+  toDoc Fst = doc "fst"
+  toDoc Snd = doc "snd"
+
 instance ToDoc Closure where
   toDoc cl = case cl of
     ErrorClosure str -> doc "Error :" <+> doc str
@@ -165,13 +182,14 @@ instance ToDoc Closure where
     PrimClosure prim _ -> doc "Primary :" <+> toDoc prim
 
 instance ToDoc Description where
-  toDoc StepAlloc       = doc "allocate"
-  toDoc StepBeta        = doc "beta reduction"
-  toDoc (StepApply f)   = doc "apply"  <+> toDoc f
-  toDoc (StepDelta pes) = doc "delta:" <+> toDoc pes
-  toDoc (StepMatch c)   = doc "match"  <+> toDoc c
-  toDoc (StepIf b)      = doc "if"     <+> doc (show b)
-  toDoc StepSeq         = doc "seq"
+  toDoc StepAlloc        = doc "allocate"
+  toDoc StepBeta         = doc "beta reduction"
+  toDoc (StepApply f)    = doc "apply"  <+> toDoc f
+  toDoc (StepDelta pes)  = doc "delta:" <+> toDoc pes
+  toDoc (StepMatch c)    = doc "match"  <+> toDoc c
+  toDoc (StepIf b)       = doc "if"     <+> doc (show b)
+  toDoc StepSeq          = doc "seq"
+  toDoc StepAllocConArgs = doc "allocate constructor arguments"
 
 -- | Based on purescript implementation
 mintersperse :: (Monoid m) => m -> [m] -> m
@@ -189,16 +207,20 @@ instance ToDoc DescriptionWithContext where
       ]
 
 -- | For the heap we need to know which pointers we are about to collect
-heapToDoc :: forall a. ToDoc a => Set Ptr -> Heap a -> Doc Style String
-heapToDoc garbage (Heap _next heap) =
+heapToDoc :: forall a. ToDoc a
+  => Set Ptr   -- ^ To be collected
+  -> Maybe Ptr -- ^ Focus (where are we going to take a step?)
+  -> Heap a -> Doc Style String
+heapToDoc garbage focus (Heap _next heap) =
     table $ map go (Map.toList heap)
   where
     go :: (Ptr, a) -> [Doc Style String]
-    go (ptr, a) = [markGarbage ptr $ toDoc ptr, doc " = ", toDoc a]
+    go (ptr, a) = [mark ptr $ toDoc ptr, doc " = ", toDoc a]
 
-    markGarbage :: Ptr -> Doc Style String -> Doc Style String
-    markGarbage ptr
+    mark :: Ptr -> Doc Style String -> Doc Style String
+    mark ptr
       | ptr `Set.member` garbage = style $ \st -> st { styleBackground = Just Red }
+      | Just ptr == focus        = style $ \st -> st { styleBackground = Just Green }
       | otherwise                = id
 
 {-------------------------------------------------------------------------------

@@ -6,7 +6,6 @@ module CBN.Trace.HeapGraph (toGraphFiles) where
 
 import Control.Monad
 import Data.Graph (Graph)
-import Data.Monoid ((<>))
 import qualified Data.Graph as Graph
 import qualified Data.Text as T
 
@@ -77,7 +76,10 @@ renderMemoryGraph (graph, f, g) =
     toDotHtml (Style Nothing _ True _, str) = "<B>" <> escapeChars str <> "</B>"
     toDotHtml (Style Nothing _ _ True, str) = "<I>" <> escapeChars str <> "</I>"
     toDotHtml (Style (Just fg) _ _ _, str) =
-      let color = case fg of Blue -> "blue"; Red -> "red"
+      let color = case fg of
+                    Blue  -> "blue"
+                    Red   -> "red"
+                    Green -> "green"
       in
         "<FONT COLOR=\"" <> color <> "\">" <> escapeChars str <> "</FONT>"
     toDotHtml (Style Nothing _ False False, str) = escapeChars str

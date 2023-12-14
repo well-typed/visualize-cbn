@@ -39,11 +39,13 @@ executable visualize-cbn
                        CBN.Eval
                        CBN.Free
                        CBN.Heap
+                       CBN.InlineHeap
                        CBN.Language
                        CBN.Options
                        CBN.Parser
                        CBN.Pretty
                        CBN.Pretty.Precedence
+                       CBN.SelThunkOpt
                        CBN.Subst
                        CBN.Trace
                        CBN.Trace.HeapGraph
@@ -79,6 +81,7 @@ executable visualize-cbn
                        RecordWildCards
                        ScopedTypeVariables
                        StandaloneDeriving
+                       TupleSections
   other-extensions:    GeneralizedNewtypeDeriving
                        OverloadedStrings
                        TemplateHaskell

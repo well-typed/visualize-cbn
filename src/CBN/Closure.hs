@@ -1,7 +1,7 @@
 module CBN.Closure (toClosureGraph, Closure(..), Id) where
 
 import Data.Maybe (fromJust)
-import Data.Graph as Graph
+import Data.Graph as Graph hiding (edges)
 import Control.Monad.State
 import qualified Data.Set as Set
 import qualified Data.Map as Map
@@ -9,7 +9,7 @@ import qualified Data.Tree as Tree
 
 import CBN.Language
 import CBN.Heap
-import CBN.Trace
+import CBN.Trace ()
 
 -- Some Terms have a heap Pointer, but not an explicit CBN.Heap.Ptr.
 -- For example the closure `Cons 1 Nil` has a Pointer to `1`
@@ -59,14 +59,14 @@ thunk term = ThunkClosure term $ Set.toList $ pointers term
 -- Heap could be used in the future to eliminate Indirections.
 
 toClosure :: (Heap Term, Term) -> Closure
-toClosure (heap, term) = case term of
+toClosure (_heap, term) = case term of
   TVar (Var x) -> ErrorClosure $ "free variable " ++ show x
   TLam _ _ -> FunClosure term ls
     where ls = Set.toList $ pointers term
   TCon (ConApp con terms) -> ConClosure con terms
   TPtr ptr -> IndirectionClosure ptr
   TPrim (PrimApp p es) -> PrimClosure p es
-  TLet _ _ _ -> thunk term
+  TLet _ _ -> thunk term
   TApp _ _ -> thunk term
   TCase _ _ -> thunk term
   TIf _ _ _ -> thunk term
@@ -88,7 +88,7 @@ toClosureGraph (heap@(Heap _ hp), term) =
     -- If we ignore Heap.Ptrs, each heap term, defines a tree of other reachable
     -- terms.
     mkTree :: (Ptr, Term) -> [(Closure, Id, [Id])]
-    mkTree (ptr, term) = Tree.flatten $ addInternalEdges tree
+    mkTree (ptr, term') = Tree.flatten $ addInternalEdges tree
       where
         identify :: State Int Id
         identify = do
@@ -104,15 +104,15 @@ toClosureGraph (heap@(Heap _ hp), term) =
             cont = map addInternalEdges subTrees
 
         tree :: Tree (Id, (Closure, [Id]))
-        tree = evalState (Tree.unfoldTreeM f term) 0
+        tree = evalState (Tree.unfoldTreeM f term') 0
 
         -- The [Id] here contains only the pointer ids and
         -- Not the Ids of the same Tree, as those are not assigned yet.
         -- They are added  at `addInternalEdges`, after the creation of the whole tree.
 
         f :: Term -> State Int ((Id, (Closure, [Id])), [Term])
-        f term = do
+        f term'' = do
           myid <- identify
-          let closure = toClosure (heap, term)
+          let closure = toClosure (heap, term'')
           let (ptrs, terms) = extractEdges closure
           return ((myid, (closure, map defaultId ptrs)), terms)

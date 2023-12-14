@@ -10,6 +10,15 @@ module CBN.Language (
   , ConApp(..)
   , PrimApp(..)
   , Term(..)
+  , Branches(..)
+  , Selector(..)
+    -- * Classification
+  , termIsSimple
+    -- * Interpretation of selectors
+  , selectorCon
+  , selectorVars
+  , selectorIndex
+  , selectorMatch
     -- * Values
   , Value(..)
   , valueToTerm
@@ -27,6 +36,7 @@ import Data.String (IsString)
 
 import CBN.Heap
 import CBN.Util.Snoc (Snoc)
+
 import qualified CBN.Util.Snoc as Snoc
 
 {-------------------------------------------------------------------------------
@@ -56,9 +66,12 @@ data Match = Match Pat Term
 -- | Primitives
 data Prim =
     PInt Integer
+  | PISucc
   | PIAdd
   | PISub
   | PIMul
+  | PIMin
+  | PIMax
   | PIEq
   | PILt
   | PILe
@@ -74,17 +87,71 @@ data PrimApp = PrimApp Prim [Term]
 
 -- | Term
 data Term =
-    TVar Var              -- ^ Variable
-  | TApp Term Term        -- ^ Application
-  | TLam Var Term         -- ^ Lambda abstraction
-  | TLet Var Term Term    -- ^ (Recursive) let binding
-  | TPtr Ptr              -- ^ Heap pointer
-  | TCon ConApp           -- ^ Constructor application
-  | TCase Term [Match]    -- ^ Pattern match
-  | TPrim PrimApp          -- ^ Primitives (built-ins)
-  | TIf Term Term Term    -- ^ Conditional
-  | TSeq Term Term        -- ^ Force evaluation
+    TVar Var                 -- ^ Variable
+  | TApp Term Term           -- ^ Application
+  | TLam Var Term            -- ^ Lambda abstraction
+  | TLet [(Var, Term)] Term  -- ^ (Mutually recursive) let binding
+  | TPtr Ptr                 -- ^ Heap pointer
+  | TCon ConApp              -- ^ Constructor application
+  | TCase Term Branches      -- ^ Pattern match
+  | TPrim PrimApp            -- ^ Primitives (built-ins)
+  | TIf Term Term Term       -- ^ Conditional
+  | TSeq Term Term           -- ^ Force evaluation
   deriving (Show, Data, Eq)
+
+-- | Branches of a case statement
+data Branches =
+    -- | User-defined branches (normal case statement)
+    Matches [Match]
+
+    -- | Selector
+  | Selector Selector
+  deriving (Show, Data, Eq)
+
+-- | Selectors
+data Selector =
+    Fst
+  | Snd
+  deriving (Show, Data, Eq)
+
+{-------------------------------------------------------------------------------
+  Classification
+-------------------------------------------------------------------------------}
+
+-- | Is this a "simple" term?
+--
+-- A simple term is one that we can substitute freely, even if multiple times,
+-- without losing sharing.
+termIsSimple :: Term -> Bool
+termIsSimple (TPtr _)               = True
+termIsSimple (TCon (ConApp _ []))   = True
+termIsSimple (TPrim (PrimApp _ [])) = True
+termIsSimple _                      = False
+
+{-------------------------------------------------------------------------------
+  Interpretation of selectors
+-------------------------------------------------------------------------------}
+
+-- | Constructor name this selector matches against
+selectorCon :: Selector -> Con
+selectorCon Fst = Con "Pair"
+selectorCon Snd = Con "Pair"
+
+-- | Variable names for the implied case statement of this selector
+selectorVars :: Selector -> [Var]
+selectorVars Fst = [Var "x", Var "y"]
+selectorVars Snd = [Var "x", Var "y"]
+
+-- | Which argument does this selector extract?
+selectorIndex :: Selector -> Int
+selectorIndex Fst = 0
+selectorIndex Snd = 1
+
+selectorMatch :: Selector -> Match
+selectorMatch s =
+    Match
+      (Pat (selectorCon s) (selectorVars s))
+      (TVar $ selectorVars s !! selectorIndex s)
 
 {-------------------------------------------------------------------------------
   Values

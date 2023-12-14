@@ -50,5 +50,6 @@ write r = do
       ]
 
     toAnsiColor :: Color -> ANSI.Color
-    toAnsiColor Blue = ANSI.Blue
-    toAnsiColor Red  = ANSI.Red
+    toAnsiColor Blue  = ANSI.Blue
+    toAnsiColor Red   = ANSI.Red
+    toAnsiColor Green = ANSI.Green
