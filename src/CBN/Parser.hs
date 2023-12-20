@@ -6,10 +6,10 @@ module CBN.Parser (
   , parseIO
   ) where
 
-import Control.Applicative (asum)
 import Control.Exception
 import Control.Monad
 import Data.Bifunctor
+import Data.Foldable (asum)
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Quote
 import Text.Parsec

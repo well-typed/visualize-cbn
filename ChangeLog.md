@@ -1,5 +1,17 @@
 # Revision history for visualize-cbn
 
+## 0.2.0 -- 2023-12-20
+
+* Support multiple (mutually recursive) bindings in `let`
+* Fix pattern matching on heap-allocated objects (we were losing sharing)
+* Support heap inlining
+* Support for selectors (`fst`, `snd`)
+* Support the selector thunk optimization
+* Add `--disable-ansi` command line
+* Improve trace summarization
+* Add some new primitive functions (`min`, `max`, `succ`)
+* Add option to hide the prelude only after a specified step
+
 ## 0.1.0.2  -- 2019-09-10
 
 * Newer GHC compatibility
@@ -18,4 +30,4 @@
   this avoids moving `e1` to the heap  (provided that there aren't multiple
   references to `x` from `e2`), clarifying the evaluation.
 * Added graph output (contributed by Yiğit Özkavcı).
-* Improved heap descriptions (contributed by Tim Rakowski). 
+* Improved heap descriptions (contributed by Tim Rakowski).

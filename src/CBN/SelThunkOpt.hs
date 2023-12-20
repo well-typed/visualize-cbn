@@ -19,9 +19,9 @@
 
 module CBN.SelThunkOpt (selThunkOpt) where
 
-import Control.Applicative
 import Control.Monad
 import Control.Monad.State
+import Data.Foldable (asum)
 import Data.Set (Set)
 
 import qualified Data.Map as Map
