@@ -88,9 +88,10 @@ parseSummarizeOptions = SummarizeOptions
            , value 1000
            , metavar "N"
            ])
-    <*> (switch $ mconcat [
+    <*> (optional $ option auto $ mconcat [
              long "hide-prelude"
-           , help "Hide the prelude from the help"
+           , metavar "STEP"
+           , help "Hide the prelude from the help from the given step"
            ])
     <*> (many $ option str $ mconcat [
              long "hide-term"

@@ -102,7 +102,7 @@ traceTerm shouldGC shouldInline enableSelThunkOpt = go
 data SummarizeOptions = SummarizeOptions {
       summarizeCollapseBeta :: Bool
     , summarizeMaxNumSteps  :: Int
-    , summarizeHidePrelude  :: Bool
+    , summarizeHidePrelude  :: Maybe Int
     , summarizeHideTerms    :: [String]
     , summarizeHideGC       :: Bool
     , summarizeHideSelThunk :: Bool
@@ -167,7 +167,7 @@ summarize SummarizeOptions{..} = go 0
 
       where
         showSrc :: TraceCont -> Trace
-        showSrc = Trace (goHeap hp, e)
+        showSrc = Trace (goHeap n hp, e)
 
     -- | We already saw one beta reduction; skip any subsequent ones
     goBeta :: Int -> Trace -> TraceCont
@@ -186,13 +186,15 @@ summarize SummarizeOptions{..} = go 0
           _otherwise  -> False
 
     -- | Cleanup the heap
-    goHeap :: Heap Term -> Heap Term
-    goHeap (Heap next heap) =
+    goHeap :: Int -> Heap Term -> Heap Term
+    goHeap n (Heap next heap) =
         Heap next $ Map.filterWithKey shouldShow heap
       where
         shouldShow :: Ptr -> Term -> Bool
         shouldShow (Ptr Nothing (Just name)) _ = and [
-              not summarizeHidePrelude
+              case summarizeHidePrelude of
+                Nothing -> True
+                Just n' -> n < n'
             , not (name `elem` summarizeHideTerms)
             ]
         shouldShow (Ptr _ _) _ = True

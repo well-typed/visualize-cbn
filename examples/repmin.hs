@@ -5,7 +5,7 @@
 --
 -- > cabal run visualize-cbn -- \
 -- >   --show-trace \
--- >   --hide-prelude \
+-- >   --hide-prelude=1 \
 -- >   --gc \
 -- >   --selector-thunk-opt \
 -- >   --inline-heap \
