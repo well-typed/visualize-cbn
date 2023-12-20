@@ -10,11 +10,14 @@ data Options = Options {
       optionsInput       :: FilePath
     , optionsShowTrace   :: Bool
     , optionsGC          :: Bool
+    , optionsSelThunkOpt :: Bool
+    , optionsInlineHeap  :: Bool
     , optionsSummarize   :: SummarizeOptions
     , optionsJsOutput    :: Maybe FilePath
     , optionsJsName      :: String
     , optionsGraphOutput :: Maybe FilePath
     , optionsGraphTermsOutput :: Maybe FilePath
+    , optionsDisableAnsi :: Bool
     }
   deriving (Show)
 
@@ -35,6 +38,14 @@ parseOptions = Options
     <*> (switch $ mconcat [
              long "gc"
            , help "GC after each step"
+           ])
+    <*> (switch $ mconcat [
+             long "selector-thunk-opt"
+           , help "Enable the selector thunk optimization"
+           ])
+    <*> (switch $ mconcat [
+             long "inline-heap"
+           , help "Simplify the heap by inlining simple terms after each step"
            ])
     <*> parseSummarizeOptions
     <*> (optional . strOption $ mconcat [
@@ -59,6 +70,10 @@ parseOptions = Options
            , help "Generate one graph representation file for each step"
            , metavar "PATH/FILES-PREFIX"
            ])
+    <*> (switch $ mconcat [
+             long "disable-ansi"
+           , help "Disable ANSI escapes codes for terminal output (no color)"
+           ])
 
 parseSummarizeOptions :: Parser SummarizeOptions
 parseSummarizeOptions = SummarizeOptions
@@ -73,9 +88,10 @@ parseSummarizeOptions = SummarizeOptions
            , value 1000
            , metavar "N"
            ])
-    <*> (switch $ mconcat [
+    <*> (optional $ option auto $ mconcat [
              long "hide-prelude"
-           , help "Hide the prelude from the help"
+           , metavar "STEP"
+           , help "Hide the prelude from the help from the given step"
            ])
     <*> (many $ option str $ mconcat [
              long "hide-term"
@@ -84,4 +100,12 @@ parseSummarizeOptions = SummarizeOptions
     <*> (switch $ mconcat [
              long "hide-gc"
            , help "Hide GC steps"
+           ])
+    <*> (switch $ mconcat [
+             long "hide-selector-thunk-opt"
+           , help "Hide steps where the selector thunk optimization gets applied"
+           ])
+    <*> (switch $ mconcat [
+             long "hide-inlining"
+           , help "Hide heap inlining steps"
            ])

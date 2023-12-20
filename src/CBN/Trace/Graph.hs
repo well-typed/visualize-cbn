@@ -2,17 +2,20 @@
 
 module CBN.Trace.Graph (render) where
 
-import           CBN.Eval
-import           CBN.Heap
-import           CBN.Pretty
-import           CBN.Trace
+import Data.Set (Set)
+import Data.Maybe (listToMaybe)
+
+import qualified Data.Set  as Set
+import qualified Data.Text as T
+
+import CBN.Eval
+import CBN.Heap
+import CBN.Pretty
+import CBN.Trace
+import CBN.Util.Doc.Style
+
 import qualified CBN.Util.Doc          as Doc
 import qualified CBN.Util.Doc.Rendered as Rendered
-import           CBN.Util.Doc.Style
-import           Data.Monoid           ((<>))
-import           Data.Set              (Set)
-import qualified Data.Set              as Set
-import qualified Data.Text             as T
 
 render :: Trace -> String
 render tr =
@@ -24,14 +27,16 @@ render tr =
     go :: Int -> Trace -> String
     go index (Trace (hp, t) cont) =
       case cont of
-        TraceWHNF _     -> mkFrame Set.empty "whnf"
-        TraceStuck err  -> mkFrame Set.empty (mkErr err)
-        TraceStopped    -> mkFrame Set.empty "stopped"
-        TraceStep d tr' -> mkFrame Set.empty (mkDesc d) ++ go (index + 1) tr'
-        TraceGC ps tr'  -> mkFrame ps "gc" ++ go (index + 1) tr'
+        TraceWHNF _          -> mkFrame Set.empty Nothing "whnf"
+        TraceStuck err       -> mkFrame Set.empty Nothing (mkErr err)
+        TraceStopped         -> mkFrame Set.empty Nothing "stopped"
+        TraceStep d tr'      -> mkFrame Set.empty (mkFocus d) (mkDesc d) ++ go (index + 1) tr'
+        TraceGC ps tr'       -> mkFrame ps Nothing "gc"       ++ go (index + 1) tr'
+        TraceSelThunk ps tr' -> mkFrame ps Nothing "selector" ++ go (index + 1) tr'
+        TraceInline ps tr'   -> mkFrame ps Nothing "inline"   ++ go (index + 1) tr'
       where
-        mkFrame :: Set Ptr -> T.Text -> String
-        mkFrame garbage status =
+        mkFrame :: Set Ptr -> Maybe Ptr -> T.Text -> String
+        mkFrame garbage focus status =
           T.unpack $
             setLabel index ("<<TABLE ALIGN=\"LEFT\">" <> rows <> "</TABLE>>")
             <> "\n"
@@ -39,7 +44,7 @@ render tr =
           where
             rows :: T.Text
             rows = mkRow (pretty t)
-                <> mkRow (pretty (heapToDoc garbage hp))
+                <> mkRow (pretty (heapToDoc garbage focus hp))
                 <> mkRow status
 
         mkRow :: T.Text -> T.Text
@@ -85,7 +90,14 @@ render tr =
         toDotHtml (Style Nothing _ True _, str) = "<B>" <> escapeChars str <> "</B>"
         toDotHtml (Style Nothing _ _ True, str) = "<I>" <> escapeChars str <> "</I>"
         toDotHtml (Style (Just fg) _ _ _, str) =
-          let color = case fg of Blue -> "blue"; Red -> "red"
+          let color = case fg of
+                        Blue  -> "blue"
+                        Red   -> "red"
+                        Green -> "green"
           in
             "<FONT COLOR=\"" <> color <> "\">" <> escapeChars str <> "</FONT>"
         toDotHtml (Style Nothing _ False False, str) = escapeChars str
+
+        mkFocus :: DescriptionWithContext -> Maybe Ptr
+        mkFocus (DescriptionWithContext _ ctxt) = listToMaybe (reverse ctxt)
+

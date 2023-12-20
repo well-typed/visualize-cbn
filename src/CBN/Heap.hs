@@ -8,6 +8,7 @@ module CBN.Heap (
   , emptyHeap
   , deref
   , alloc
+  , allocMany
   , mutate
   , initHeap
   , pprintPtr
@@ -72,12 +73,37 @@ emptyHeap = Heap 0 Map.empty
 -- | Allocate a new value on the heap
 --
 -- The value is allowed to depend on the new heap pointer.
-alloc :: Maybe String -> Heap a -> (Ptr -> a) -> (Heap a, Ptr)
-alloc name (Heap next hp) e =
-    (Heap (next + 1) (Map.insert ptr (e ptr) hp), ptr)
+alloc :: forall a. Maybe String -> Heap a -> (Ptr -> a) -> (Heap a, Ptr)
+alloc name hp e =
+    allocMany [(name, \ptr -> (ptr, e ptr))] aux hp
   where
-    ptr :: Ptr
-    ptr = Ptr (Just next) name
+    aux :: [(Ptr, a)] -> ([(Ptr, a)], Ptr)
+    aux [(ptr, a)] = ([(ptr, a)], ptr)
+    aux _ = error "alloc: impossible"
+
+-- | Generalization of 'alloc' to multiple bindings
+--
+-- This signature is carefully constructed such the allocation for each binding
+-- can affect /all/ other bindings
+allocMany :: forall a b r.
+     [(Maybe String, Ptr -> b)] -- ^ New entries (with to-be-allocated pointers)
+  -> ([b] -> ([(Ptr, a)], r))   -- ^ Process all bindings at once
+  -> Heap a -> (Heap a, r)
+allocMany toAlloc procAllBindings (Heap next hp) = (
+      Heap {
+          heapNextAvailable = next + length newEntries
+        , heapEntries = Map.union (Map.fromList newEntries) hp
+        }
+    , result
+    )
+  where
+     newEntries :: [(Ptr, a)]
+     result     :: r
+     (newEntries, result) =
+         procAllBindings $ zipWith aux toAlloc [next..]
+       where
+         aux :: (Maybe String, Ptr -> b) -> Int -> b
+         aux (name, f) n = f $ Ptr (Just n) name
 
 deref :: (Heap a, Ptr) -> Maybe a
 deref (Heap _ hp, ptr) = Map.lookup ptr hp

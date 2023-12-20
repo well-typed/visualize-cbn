@@ -9,14 +9,16 @@ module CBN.Parser (
 import Control.Exception
 import Control.Monad
 import Data.Bifunctor
+import Data.Foldable (asum)
 import Language.Haskell.TH (Q)
 import Language.Haskell.TH.Quote
 import Text.Parsec
 import Text.Parsec.Language (haskellDef)
 import Text.Parsec.Pos (newPos)
 import Text.Parsec.String
-import qualified Text.Parsec.Token   as P
+
 import qualified Language.Haskell.TH as TH
+import qualified Text.Parsec.Token   as P
 
 import CBN.Language
 import CBN.Heap
@@ -88,9 +90,7 @@ parseTermNoApp =  msum [
             <*  reservedOp "->"
             <*> parseTerm
     , TLet  <$  reserved "let"
-            <*> parseVar
-            <*  reservedOp "="
-            <*> parseTerm
+            <*> parseLetBound
             <*  reservedOp "in"
             <*> parseTerm
     , TIf   <$  reserved "if"
@@ -99,10 +99,12 @@ parseTermNoApp =  msum [
             <*> parseTerm
             <*  reserved "else"
             <*> parseTerm
-    , TCase <$  reserved "case"
+    , case1 <$  reserved "case"
             <*> parseTerm
             <*  reserved "of"
             <*> braces (parseMatch `sepBy` reservedOp ";")
+    , case2 <$> parseSelector
+            <*> parseTerm
     , TVar  <$> parseVar
     , parens parseTerm
     ]
@@ -113,15 +115,42 @@ parseTermNoApp =  msum [
     unaryTCon :: Con -> Term
     unaryTCon c = TCon (ConApp c [])
 
+    case1 :: Term -> [Match] -> Term
+    case1 t ms = TCase t (Matches ms)
+
+    case2 :: Selector -> Term -> Term
+    case2 s t = TCase t (Selector s)
+
+parseSelector :: Parser Selector
+parseSelector = msum [
+      Fst <$ reserved "fst"
+    , Snd <$ reserved "snd"
+    ]
+
+parseLetBound :: Parser [(Var, Term)]
+parseLetBound = asum [
+      (:[]) <$> parseOne
+    , braces (parseOne `sepBy` reservedOp ";")
+    ]
+  where
+    parseOne :: Parser (Var, Term)
+    parseOne =
+        (,) <$> parseVar
+            <*  reservedOp "="
+            <*> parseTerm
+
 parsePrim :: Parser Prim
 parsePrim = msum [
-      PInt  <$> natural
-    , PIAdd <$  reserved "add"
-    , PISub <$  reserved "sub"
-    , PIMul <$  reserved "mul"
-    , PILt  <$  reserved "lt"
-    , PIEq  <$  reserved "eq"
-    , PILe  <$  reserved "le"
+      PInt   <$> natural
+    , PISucc <$  reserved "succ"
+    , PIAdd  <$  reserved "add"
+    , PISub  <$  reserved "sub"
+    , PIMul  <$  reserved "mul"
+    , PIMin  <$  reserved "min"
+    , PIMax  <$  reserved "max"
+    , PILt   <$  reserved "lt"
+    , PIEq   <$  reserved "eq"
+    , PILe   <$  reserved "le"
     ]
 
 -- | Our input files consist of an initial heap and the term to be evaluated
@@ -150,9 +179,11 @@ lexer = P.makeTokenParser haskellDef {
         , "of"
         , "let"
         , "in"
+        , "succ"
         , "add"
         , "sub"
         , "mul"
+        , "max"
         , "lt"
         , "eq"
         , "le"
@@ -161,6 +192,8 @@ lexer = P.makeTokenParser haskellDef {
         , "else"
         , "main"
         , "seq"
+        , "fst"
+        , "snd"
         ]
     , P.reservedOpNames = [
           "\\"

@@ -18,6 +18,7 @@ data Style = Style {
 data Color =
     Blue
   | Red
+  | Green
   deriving (Eq)
 
 instance Default Style where

@@ -1,15 +1,25 @@
 module CBN.Subst (
     subst
-  , RecursiveBinding(..)
+  , substVar
+  , substPtr
+  , substVars
+  , substPtrs
   , allocSubst
   ) where
 
+import Data.Bifunctor
+import Data.List (partition)
 import Data.Map (Map)
+
 import qualified Data.Map as Map
 
 import CBN.Free
 import CBN.Heap
 import CBN.Language
+
+{-------------------------------------------------------------------------------
+  Substitution
+-------------------------------------------------------------------------------}
 
 -- | Substitution
 --
@@ -18,25 +28,39 @@ import CBN.Language
 -- under binders, we can never have free variables, and hence this is not
 -- something we need to worry about.
 class Subst a where
-  subst :: Var -> Term -> a -> a
+  subst :: Either Ptr Var -> Term -> a -> a
+
+substVar :: Subst a => Var -> Term -> a -> a
+substVar = subst . Right
+
+substPtr :: Subst a => Ptr -> Term -> a -> a
+substPtr = subst . Left
+
+{-------------------------------------------------------------------------------
+  Instances
+-------------------------------------------------------------------------------}
 
 instance Subst a => Subst [a] where
   subst x e = map (subst x e)
 
 instance Subst Term where
-  subst _ _ (TPtr ptr')     = TPtr ptr'
-  subst x e (TVar x')       = if x == x' then e
-                                         else TVar x'
-  subst x e (TLam x' e1)    = if x == x' then TLam x'             e1
-                                         else TLam x' (subst x e e1)
-  subst x e (TLet x' e1 e2) = if x == x' then TLet x'             e1            e2
-                                         else TLet x' (subst x e e1) (subst x e e2)
-  subst x e (TCon ces)      = TCon  (subst x e ces)
-  subst x e (TPrim pes)     = TPrim (subst x e pes)
-  subst x e (TApp e1 e2)    = TApp  (subst x e e1) (subst x e e2)
-  subst x e (TCase e1 ms)   = TCase (subst x e e1) (subst x e ms)
-  subst x e (TSeq e1 e2)    = TSeq  (subst x e e1) (subst x e e2)
-  subst x e (TIf c t f)     = TIf   (subst x e c)  (subst x e t)  (subst x e f)
+  subst x e term =
+      case term of
+        TPtr x'       -> if x == Left  x' then e else term
+        TVar x'       -> if x == Right x' then e else term
+        TLam x' e1    -> if x == Right x'
+                           then term
+                           else TLam x' (subst x e e1)
+        TLet bound e' -> if x `elem` map (Right . fst) bound
+                           then term
+                           else TLet (map (second (subst x e)) bound)
+                                     (subst x e e')
+        TCon ces      -> TCon  (subst x e ces)
+        TPrim pes     -> TPrim (subst x e pes)
+        TApp e1 e2    -> TApp  (subst x e e1) (subst x e e2)
+        TCase e1 ms   -> TCase (subst x e e1) (subst x e ms)
+        TSeq e1 e2    -> TSeq  (subst x e e1) (subst x e e2)
+        TIf c t f     -> TIf   (subst x e c)  (subst x e t)  (subst x e f)
 
 instance Subst ConApp where
   subst x e (ConApp c es) = ConApp c (subst x e es)
@@ -46,44 +70,90 @@ instance Subst PrimApp where
 
 instance Subst Match where
   subst x e (Match (Pat c xs) e') =
-    if x `elem` xs then Match (Pat c xs)            e'
-                   else Match (Pat c xs) (subst x e e')
+    if x `elem` map Right xs
+      then Match (Pat c xs)            e'
+      else Match (Pat c xs) (subst x e e')
 
-data RecursiveBinding = RecBinding | NonRecBinding
+instance Subst Branches where
+  subst x e (Matches ms) = Matches (map (subst x e) ms)
+  subst x e (Selector s) = Selector (subst x e s)
 
-allocSubst :: RecursiveBinding -> [(Var, Term)] -> (Heap Term, Term) -> (Heap Term, Term)
-allocSubst recBind = go
+instance Subst Selector where
+  subst _ _ = id
+
+{-------------------------------------------------------------------------------
+  Many-variable substitution
+-------------------------------------------------------------------------------}
+
+substMany :: Subst a => [(Either Ptr Var, Term)] -> a -> a
+substMany []         = id
+substMany ((x, e):s) = substMany (map (second (subst x e)) s) . subst x e
+
+substVars :: Subst a => [(Var, Term)] -> a -> a
+substVars = substMany . map (first Right)
+
+substPtrs :: Subst a => [(Ptr, Term)] -> a -> a
+substPtrs = substMany . map (first Left)
+
+{-------------------------------------------------------------------------------
+  Heap allocation
+-------------------------------------------------------------------------------}
+
+allocSubst :: [(Var, Term)] -> (Heap Term, Term) -> (Heap Term, Term)
+allocSubst bindings (heap, body) =
+    let toAlloc, toSubst :: [(Var, Term)]
+        (toAlloc, toSubst) = partition requiresAlloc bindings
+
+        body' :: Term
+        body' = substVars toSubst body
+
+        heap'      :: Heap Term
+        substAlloc :: [(Var, Term)]
+        (heap', substAlloc) =
+            allocMany
+              (map prepareHeapEntry $ map (second (substVars toSubst)) toAlloc)
+              processHeapEntries
+              heap
+
+    in (heap', substVars substAlloc body')
   where
-    go :: [(Var, Term)] -> (Heap Term, Term) -> (Heap Term, Term)
-    go []          (hp, e) = (hp, e)
-    go ((x, s):ss) (hp, e)
-      | isSimple s      = go ss (hp, subst x s e)
-      | singleUse x s e = go ss (hp, subst x s e)
-      | otherwise =
-          let (hp', ptr) = alloc (Just (varName x)) hp (substRec x s)
-              e'         = subst x (TPtr ptr) e
-          in go ss (hp', e')
+    -- We all all post-processing in 'processHeapEntries'
+    prepareHeapEntry :: (Var, Term) -> (Maybe String, Ptr -> (Var, Term, Ptr))
+    prepareHeapEntry (x, t) = (
+          Just (varName x)
+        , \ptr -> (x, t, ptr)
+        )
 
-    -- Is this a "simple" term (one that we can substitute freely, even if
-    -- multiple times)?
-    isSimple :: Term -> Bool
-    isSimple (TPtr _)               = True
-    isSimple (TCon (ConApp _ []))   = True
-    isSimple (TPrim (PrimApp _ [])) = True
-    isSimple _                      = False
-
-    -- Is there (at most) only one use of this term?
-    -- (If so, we substitute rather than allocate on the heap)
-    -- If there are recursive occurrences we return False by definition.
-    singleUse :: Var -> Term -> Term -> Bool
-    singleUse x s e
-      | RecBinding <- recBind, x `Map.member` free_s = False
-      | otherwise = Map.findWithDefault 0 x free_e <= 1
+    -- New heap entries, along with substitution for all heap-allocated vars
+    processHeapEntries :: [(Var, Term, Ptr)] -> ([(Ptr, Term)], [(Var, Term)])
+    processHeapEntries entries = (
+          map (\(_, t, ptr) -> (ptr, substVars substAlloc t)) entries
+        , substAlloc
+        )
       where
-        free_s, free_e :: Map Var Count
-        free_s = free s
-        free_e = free e
+        substAlloc :: [(Var, Term)]
+        substAlloc = map (\(x, _, ptr) ->  (x, TPtr ptr)) entries
 
-    substRec :: Var -> Term -> Ptr -> Term
-    substRec x s ptr | RecBinding <- recBind = subst x (TPtr ptr) s
-                     | otherwise             = s
+    -- Do we need to allocate this term?
+    requiresAlloc :: (Var, Term) -> Bool
+    requiresAlloc (x, t) = and [
+          not $ termIsSimple t
+        , not $ isUsedOnceInBody x
+        ]
+
+    -- Is this binding used only once, and only in the body?
+    isUsedOnceInBody :: Var -> Bool
+    isUsedOnceInBody x = and [
+          x `notElem` Map.keys freeInBindings
+        , Map.findWithDefault 0 x freeInBody <= 1
+        ]
+      where
+        freeInBindings, freeInBody :: Map Var Count
+        freeInBindings = free $ map snd bindings
+        freeInBody     = free body
+
+
+
+
+
+

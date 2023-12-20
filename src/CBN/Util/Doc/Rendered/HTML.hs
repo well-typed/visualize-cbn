@@ -6,9 +6,9 @@ import Data.Char (isSpace)
 import Data.Default
 import Data.Function (on)
 import Data.List (intersperse, groupBy)
-import Data.Monoid
 import Text.Blaze.Html5 (Html, toHtml, (!))
 import Text.Blaze (ToMarkup(..))
+
 import qualified Text.Blaze.Html5             as H
 import qualified Text.Blaze.Html5.Attributes  as A
 
@@ -57,8 +57,9 @@ instance ToMarkup (Rendered Style) where
         ]
 
       toCssColor :: Color -> H.AttributeValue
-      toCssColor Blue = "darkblue"
-      toCssColor Red  = "darkred"
+      toCssColor Blue  = "darkblue"
+      toCssColor Red   = "darkred"
+      toCssColor Green = "lightgreen"
 
 nbsp :: Html
 nbsp = preEscapedToMarkup ("&nbsp;" :: String)

@@ -14,9 +14,14 @@ main :: IO ()
 main = do
     Options{..} <- getOptions
     input <- parseIO optionsInput parseModule =<< readFile optionsInput
-    let trace = summarize optionsSummarize $ traceTerm optionsGC input
-    when optionsShowTrace $      
-      Trace.Textual.renderIO trace
+    let trace = summarize optionsSummarize $
+                  traceTerm
+                    optionsGC
+                    optionsInlineHeap
+                    optionsSelThunkOpt
+                    input
+    when optionsShowTrace $
+      Trace.Textual.renderIO optionsDisableAnsi trace
     forM_ optionsJsOutput $ \file ->
       writeFile file $ Trace.JavaScript.render optionsJsName optionsGraphOutput trace
     forM_ optionsGraphOutput $ \file ->
