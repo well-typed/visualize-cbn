@@ -20,6 +20,7 @@
 module CBN.SelThunkOpt (selThunkOpt) where
 
 import Control.Applicative
+import Control.Monad
 import Control.Monad.State
 import Data.Set (Set)
 
