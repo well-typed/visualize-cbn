@@ -42,7 +42,9 @@ data TraceCont =
   | TraceGC (Set Ptr) Trace
 
     -- | The selector thunk optimization was applied
-  | TraceSelThunk (Set Ptr) Trace
+    --
+    -- We separately record if the selector thunk was applied at the top-level.
+  | TraceSelThunk Bool (Set Ptr) Trace
 
     -- | We simplified the heap by inlining some definitions
   | TraceInline (Set Ptr) Trace
@@ -58,11 +60,11 @@ traceTerm shouldGC shouldInline enableSelThunkOpt = go
         Step d (hp1, e1) ->
           let (traceSelThunkOpt, hp2, e2)
                 | enableSelThunkOpt
-                = let (hp', optimized) = selThunkOpt hp1
-                  in if Set.null optimized then
+                = let (hp', e', atToplevel, optimized) = selThunkOpt hp1 e1
+                  in if not atToplevel && Set.null optimized then
                        (id, hp1, e1)
                      else
-                       (Trace (hp1, e1) . TraceSelThunk optimized, hp', e1)
+                       (Trace (hp1, e1) . TraceSelThunk atToplevel optimized, hp', e')
                 | otherwise
                 = (id, hp1, e1) in
 
@@ -145,10 +147,10 @@ summarize SummarizeOptions{..} = go 0
             if summarizeHideGC
               then go (n + 1) t'
               else showSrc $ TraceGC ps $ go (n + 1) t'
-          TraceSelThunk ps t' ->
-            if summarizeHideGC
+          TraceSelThunk atToplevel ps t' ->
+            if summarizeHideSelThunk
               then go (n + 1) t'
-              else showSrc $ TraceSelThunk ps $ go (n + 1) t'
+              else showSrc $ TraceSelThunk atToplevel ps $ go (n + 1) t'
           TraceInline ps t' ->
             if summarizeHideInlining
               then go (n + 1) t'

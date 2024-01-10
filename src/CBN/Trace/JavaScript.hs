@@ -42,13 +42,13 @@ render name graph = \tr ->
     go :: Int -> Trace -> String
     go n (Trace (hp, e) c) =
         case c of
-          TraceWHNF _          -> mkFrame Set.empty Nothing "whnf"
-          TraceStuck err       -> mkFrame Set.empty Nothing (mkErr err)
-          TraceStopped         -> mkFrame Set.empty Nothing "stopped"
-          TraceStep d tr'      -> mkFrame Set.empty (mkFocus d) (mkDesc d) ++ go (n + 1) tr'
-          TraceGC ps tr'       -> mkFrame ps Nothing "gc"       ++ go (n + 1) tr'
-          TraceSelThunk ps tr' -> mkFrame ps Nothing "selector" ++ go (n + 1) tr'
-          TraceInline ps tr'   -> mkFrame ps Nothing "inline"   ++ go (n + 1) tr'
+          TraceWHNF _            -> mkFrame Set.empty Nothing "whnf"
+          TraceStuck err         -> mkFrame Set.empty Nothing (mkErr err)
+          TraceStopped           -> mkFrame Set.empty Nothing "stopped"
+          TraceStep d tr'        -> mkFrame Set.empty (mkFocus d) (mkDesc d) ++ go (n + 1) tr'
+          TraceGC ps tr'         -> mkFrame ps Nothing "gc"       ++ go (n + 1) tr'
+          TraceSelThunk _ ps tr' -> mkFrame ps Nothing "selector" ++ go (n + 1) tr'
+          TraceInline ps tr'     -> mkFrame ps Nothing "inline"   ++ go (n + 1) tr'
       where
         mkFrame :: Set Ptr -> Maybe Ptr -> String -> String
         mkFrame garbage focus status =

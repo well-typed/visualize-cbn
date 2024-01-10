@@ -1,6 +1,6 @@
 cabal-version:       >=1.10
 name:                visualize-cbn
-version:             0.2.0
+version:             0.2.1
 synopsis:            Visualize CBN reduction
 description:         CBN interpretation and visualization tool.
                      Exports in text format, coloured text (ANSI) or HTML/JavaScript.

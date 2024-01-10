@@ -1,5 +1,11 @@
 # Revision history for visualize-cbn
 
+## 0.2.1 -- 2024-01-10
+
+* Fixes to the selector thunk optimization: also apply it at the top-level,
+  and correctly apply `--hide-selector-thunk-opt` (previously `--hide-gc`
+  was hiding selector thunk optimization steps by mistake).
+
 ## 0.2.0 -- 2023-12-20
 
 * Support multiple (mutually recursive) bindings in `let`
