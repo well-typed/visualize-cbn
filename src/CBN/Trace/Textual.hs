@@ -22,13 +22,13 @@ renderIO disableAnsi = go 0
     go :: Int -> Trace -> IO ()
     go n (Trace (hp, e) c) = do
       case c of
-        TraceWHNF _          -> mkFrame Set.empty Nothing (putStr $ "whnf")
-        TraceStuck err       -> mkFrame Set.empty Nothing (putStr $ "stuck: " ++ err)
-        TraceStopped         -> mkFrame Set.empty Nothing (putStr $ "stopped")
-        TraceStep d tr'      -> mkFrame Set.empty (mkFocus d) (pretty d)  >> go (n + 1) tr'
-        TraceGC ps tr'       -> mkFrame ps Nothing (ptrs "collecting" ps) >> go (n + 1) tr'
-        TraceSelThunk ps tr' -> mkFrame ps Nothing (ptrs "apply selectors" ps) >> go (n + 1) tr'
-        TraceInline ps tr'   -> mkFrame ps Nothing (ptrs "inlining" ps) >> go (n + 1) tr'
+        TraceWHNF _              -> mkFrame Set.empty Nothing (putStr $ "whnf")
+        TraceStuck err           -> mkFrame Set.empty Nothing (putStr $ "stuck: " ++ err)
+        TraceStopped             -> mkFrame Set.empty Nothing (putStr $ "stopped")
+        TraceStep d tr'          -> mkFrame Set.empty (mkFocus d) (pretty d)  >> go (n + 1) tr'
+        TraceGC ps tr'           -> mkFrame ps Nothing (ptrs False "collecting" ps) >> go (n + 1) tr'
+        TraceSelThunk top ps tr' -> mkFrame ps Nothing (ptrs top   "apply selectors" ps) >> go (n + 1) tr'
+        TraceInline ps tr'       -> mkFrame ps Nothing (ptrs False "inlining" ps) >> go (n + 1) tr'
       where
         mkFrame :: Set Ptr -> Maybe Ptr -> IO () -> IO ()
         mkFrame garbage focus msg = do
@@ -38,10 +38,13 @@ renderIO disableAnsi = go 0
           putChar '\n'
           putStr "(" ; msg ; putStrLn ")\n"
 
-    ptrs :: String -> Set Ptr -> IO ()
-    ptrs label ps = do
+    ptrs :: Bool -> String -> Set Ptr -> IO ()
+    ptrs atToplevel label ps = do
       putStr (label ++ " ")
-      sequence_ . intersperse (putStr ", ") . map pretty $ Set.toList ps
+      sequence_ . intersperse (putStr ", ") $ concat [
+          [putStr "top-level" | atToplevel]
+        , map pretty $ Set.toList ps
+        ]
 
     pretty :: ToDoc a => a -> IO ()
     pretty =

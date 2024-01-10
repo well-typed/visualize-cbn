@@ -11,6 +11,7 @@
     Specifically section 2.5.7, "Selector optimization"
 
   - "Three runtime optimizations done by GHC's GC", Ömer Sinan Ağacan
+    <https://osa1.net/posts/2018-03-16-gc-optimizations.html>
     Specifically section 3, "Selector thunk evaluation"
 
   - "GHC Commentary: The Layout of Heap Objects", section "Selector thunks"
@@ -32,8 +33,18 @@ import CBN.Heap
 import CBN.Language
 
 -- | Apply selector thunk optimization
-selThunkOpt :: Heap Term -> (Heap Term, Set Ptr)
-selThunkOpt = findAll Set.empty
+selThunkOpt :: Heap Term -> Term -> (Heap Term, Term, Bool, Set Ptr)
+selThunkOpt hp0 e0 =
+    let (hp1, e1, atToplevel) = case applyInTerm hp0 e0 of
+                                  Nothing        -> (hp0, e0, False)
+                                  Just (hp', e') -> (hp', e', True)
+        (hp2, ptrs)           = applyInHeap hp1
+
+    in (hp2, e1, atToplevel, ptrs)
+
+-- | Apply selector thunk optimization
+applyInHeap :: Heap Term -> (Heap Term, Set Ptr)
+applyInHeap = findAll Set.empty
   where
     findAll :: Set Ptr -> Heap Term -> (Heap Term, Set Ptr)
     findAll acc hp =
@@ -89,7 +100,7 @@ applyInTerm = \hp term -> do
     -- This code is a bit simpler than the corresponding code in evaluation,
     -- because we /only/ deal with selectors, not general case statements. This
     -- means we don't need to care about substitution, but can literally just
-    -- select the right argument (using
+    -- select the right argument.
 
     go term@(TCase e (Selector s)) = do
         (hp, _) <- get

@@ -27,13 +27,13 @@ render tr =
     go :: Int -> Trace -> String
     go index (Trace (hp, t) cont) =
       case cont of
-        TraceWHNF _          -> mkFrame Set.empty Nothing "whnf"
-        TraceStuck err       -> mkFrame Set.empty Nothing (mkErr err)
-        TraceStopped         -> mkFrame Set.empty Nothing "stopped"
-        TraceStep d tr'      -> mkFrame Set.empty (mkFocus d) (mkDesc d) ++ go (index + 1) tr'
-        TraceGC ps tr'       -> mkFrame ps Nothing "gc"       ++ go (index + 1) tr'
-        TraceSelThunk ps tr' -> mkFrame ps Nothing "selector" ++ go (index + 1) tr'
-        TraceInline ps tr'   -> mkFrame ps Nothing "inline"   ++ go (index + 1) tr'
+        TraceWHNF _            -> mkFrame Set.empty Nothing "whnf"
+        TraceStuck err         -> mkFrame Set.empty Nothing (mkErr err)
+        TraceStopped           -> mkFrame Set.empty Nothing "stopped"
+        TraceStep d tr'        -> mkFrame Set.empty (mkFocus d) (mkDesc d) ++ go (index + 1) tr'
+        TraceGC ps tr'         -> mkFrame ps Nothing "gc"       ++ go (index + 1) tr'
+        TraceSelThunk _ ps tr' -> mkFrame ps Nothing "selector" ++ go (index + 1) tr'
+        TraceInline ps tr'     -> mkFrame ps Nothing "inline"   ++ go (index + 1) tr'
       where
         mkFrame :: Set Ptr -> Maybe Ptr -> T.Text -> String
         mkFrame garbage focus status =
