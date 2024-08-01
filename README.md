@@ -23,7 +23,7 @@ The syntax is not _quite_ Haskell, but hopefully it should be pretty self-explan
 We can step through the evaluation of this program using
 
 ```
-visualize-cbn -i examples/fac.hs --show-trace --hide-prelude
+visualize-cbn -i examples/fac.hs --show-trace --hide-prelude 0
 ```
 
 This will result in something like
