@@ -189,7 +189,6 @@ jobs:
           echo "package visualize-cbn" >> cabal.project
           echo "    ghc-options: -Werror=missing-methods" >> cabal.project
           cat >> cabal.project <<EOF
-          allow-newer: containers
           EOF
           $HCPKG list --simple-output --names-only | perl -ne 'for (split /\s+/) { print "constraints: any.$_ installed\n" unless /^(visualize-cbn)$/; }' >> cabal.project.local
           cat cabal.project
@@ -225,15 +224,6 @@ jobs:
         run: |
           rm -f cabal.project.local
           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
-      - name: prepare for constraint sets
-        run: |
-          rm -f cabal.project.local
-      - name: constraint set containers-0.8
-        run: |
-          $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='containers ^>=0.8' all --dry-run
-          cabal-plan topo | sort
-          $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='containers ^>=0.8' --dependencies-only -j2 all
-          $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='containers ^>=0.8' all
       - name: save cache
         if: always()
         uses: actions/cache/save@v4
