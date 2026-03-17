@@ -17,6 +17,7 @@ data Options = Options {
     , optionsJsName      :: String
     , optionsGraphOutput :: Maybe FilePath
     , optionsGraphTermsOutput :: Maybe FilePath
+    , optionsJsonOutput :: Maybe FilePath
     , optionsDisableAnsi :: Bool
     }
   deriving (Show)
@@ -69,6 +70,11 @@ parseOptions = Options
              long "heap-graph"
            , help "Generate one graph representation file for each step"
            , metavar "PATH/FILES-PREFIX"
+           ])
+    <*> (optional . strOption $ mconcat [
+             long "json"
+           , help "Generate JSON output with structured heap/term data"
+           , metavar "JSON-FILE"
            ])
     <*> (switch $ mconcat [
              long "disable-ansi"

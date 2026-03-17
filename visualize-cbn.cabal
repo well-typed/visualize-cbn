@@ -44,6 +44,7 @@ executable visualize-cbn
                        CBN.Subst
                        CBN.Trace
                        CBN.Trace.HeapGraph
+                       CBN.Trace.JSON
                        CBN.Trace.JavaScript
                        CBN.Trace.Textual
                        CBN.Trace.Graph
@@ -56,7 +57,9 @@ executable visualize-cbn
                        CBN.Util.Map
                        CBN.Util.Snoc
   build-depends:       base                 >= 4.14 && < 4.23
+                     , aeson                >= 2.0  && < 2.3
                      , ansi-terminal        >= 1.0  && < 1.2
+                     , bytestring           >= 0.10 && < 0.13
                      , blaze-html           >= 0.9  && < 0.10
                      , blaze-markup         >= 0.8  && < 0.9
                      , containers           >= 0.6  && < 0.9
