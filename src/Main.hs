@@ -1,11 +1,13 @@
   module Main (main) where
 
 import Control.Monad
+import qualified Data.ByteString.Lazy as BL
 
 import CBN.Options
 import CBN.Parser
 import CBN.Trace
 import CBN.Trace.HeapGraph  as Trace.HeapGraph
+import CBN.Trace.JSON       as Trace.JSON
 import CBN.Trace.JavaScript as Trace.JavaScript
 import CBN.Trace.Textual    as Trace.Textual
 import CBN.Trace.Graph      as Trace.Graph
@@ -13,7 +15,8 @@ import CBN.Trace.Graph      as Trace.Graph
 main :: IO ()
 main = do
     Options{..} <- getOptions
-    input <- parseIO optionsInput parseModule =<< readFile optionsInput
+    sourceCode <- readFile optionsInput
+    input <- parseIO optionsInput parseModule sourceCode
     let trace = summarize optionsSummarize $
                   traceTerm
                     optionsGC
@@ -27,3 +30,5 @@ main = do
     forM_ optionsGraphOutput $ \file ->
       writeFile file $ Trace.Graph.render trace
     forM_ optionsGraphOutput $ toGraphFiles trace
+    forM_ optionsJsonOutput $ \file ->
+      BL.writeFile file $ Trace.JSON.render sourceCode trace

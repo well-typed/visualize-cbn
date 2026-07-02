@@ -1,5 +1,12 @@
 # Revision history for visualize-cbn
 
+## 0.2.2 -- 2026-07-02
+
+* GHC 9.14 support [#30, Franklin Chen]
+* JSON output backend [#30, Franlin Chen]
+* Relax bounds [various PRs, including some by Andreas Abel]
+* New unzip example [#29, Oleg Grenrus]
+
 ## 0.2.1 -- 2024-01-10
 
 * Fixes to the selector thunk optimization: also apply it at the top-level,

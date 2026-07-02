@@ -8,3 +8,4 @@ dist-newstyle/
 .cabal.sandbox.config
 .envrc
 foo.js
+cabal.project
