@@ -1,4 +1,3 @@
 branches: master
-
-raw-project
-  allow-newer: base, template-haskell
+copy-fields: all
+local-ghc-options: -Werror
