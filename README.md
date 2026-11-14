@@ -2,6 +2,12 @@
 
 Haskell and other call-by-name languages use _lazy evaluation_ as their default evaluation strategy. For beginners and advanced programmers alike this can sometimes be confusing. The `visualize-cbn` tool is designed to help in such cases; it is a simple interpreter for a mini-Haskell-like language which outputs the state of the program at every step in a human readable format. It can also generate a HTML/JavaScript version with "Previous" and "Next" buttons to allow to step through a program.
 
+> [!WARNING]
+> This tool is experimental and not actively maintained. Use of the tool as well
+> as feedback is welcome, but Well-Typed cannot guarantee any level of unpaid
+> maintenance or support. Please contact us via email to info@well-typed.com if
+> you are interested in commercial support or funding development of the tool.
+
 ## Example
 
 Consider the following example program:
@@ -89,4 +95,5 @@ The resulting `.js` file can be embedded in a HTML page (such as a blog post); a
 </html>
 ```
 
-(This `.html` file was not written to illustrate HTML best practices :-) ) See the [Well-Typed blog post about the tool](http://www.well-typed.com/blog/2017/09/visualize-cbn/) for an example output. 
+(This `.html` file was not written to illustrate HTML best practices :-) ) See the [Well-Typed blog post about the tool](http://www.well-typed.com/blog/2017/09/visualize-cbn/) for an example output.
+
